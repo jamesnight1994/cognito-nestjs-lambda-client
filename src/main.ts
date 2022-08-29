@@ -2,9 +2,9 @@ import { NestFactory } from '@nestjs/core';
 import serverlessExpress from '@vendia/serverless-express';
 import { Callback, Context, Handler } from 'aws-lambda';
 import { AppModule } from './app.module';
+import { AuthService } from './auth/auth.service'
 
 let server: Handler;
-
 async function bootstrap(): Promise<Handler> {
   const app = await NestFactory.create(AppModule);
   await app.init();
