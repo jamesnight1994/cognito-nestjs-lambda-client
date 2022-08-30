@@ -1,30 +1,32 @@
 import { AdminCreateUserCommand, AdminCreateUserCommandInput, CognitoIdentityProviderClient } from '@aws-sdk/client-cognito-identity-provider';
 import { Injectable } from '@nestjs/common';
-import { response } from 'express';
 
 @Injectable()
 export class AuthService {
     private client: CognitoIdentityProviderClient;
     
-    public newUser: AdminCreateUserCommandInput
+    public newUser: AdminCreateUserCommandInput;
     constructor(){
         this.client = new CognitoIdentityProviderClient({
-            region: process.env.AWS_REGION
+            region: process.env.COGNITO_AWS_REGION
         });
-        this.newUser.UserPoolId = process.env.COGNITO_USER_POOL_ID;
+        
         
     }
 
-    // TODO(verify): admin create user
+    // admin create user
     adminCreateUser(email: string){
-        this.newUser.Username = email;
+        this.newUser = {
+            UserPoolId: process.env.COGNITO_USER_POOL_ID,
+            Username: email
+        };
         let command = new AdminCreateUserCommand(this.newUser);
 
         try{
             let response = this.client.send(command);
             return response;
         }catch(e){
-            return response;
+            return e;
         }
     }
 

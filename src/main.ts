@@ -1,23 +1,26 @@
+import { AdminCreateUserCommand, CognitoIdentityProviderClient } from '@aws-sdk/client-cognito-identity-provider';
+import { HttpStatus } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import serverlessExpress from '@vendia/serverless-express';
 import { Callback, Context, Handler } from 'aws-lambda';
 import { AppModule } from './app.module';
-import { AuthService } from './auth/auth.service'
+import { AuthService } from './auth/auth.service';
 
-let server: Handler;
-async function bootstrap(): Promise<Handler> {
-  const app = await NestFactory.create(AppModule);
-  await app.init();
-
-  const expressApp = app.getHttpAdapter().getInstance();
-  return serverlessExpress({ app: expressApp });
-}
 
 export const handler: Handler = async (
   event: any,
   context: Context,
   callback: Callback,
 ) => {
-  server = server ?? (await bootstrap());
-  return server(event, context, callback);
+  const appContext = await NestFactory.createApplicationContext(AppModule);
+  const authService = appContext.get(AuthService);
+  console.info("Registering user on cognito")
+  // console.log(JSON.stringify(event));
+
+  let response = await authService.adminCreateUser(event['email']);
+
+  return {
+    body: response,
+    statusCode: HttpStatus.OK
+  }
+
 };
