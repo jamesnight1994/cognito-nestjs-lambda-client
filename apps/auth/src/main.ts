@@ -4,6 +4,10 @@ import { Callback, Context, Handler } from 'aws-lambda/handler';
 import { AuthModule } from './auth.module';
 import { AuthService } from './auth.service';
 
+export enum EventTypes  {
+  REGISTER = 'REGISTER',
+  LOGIN = 'LOGIN'
+}
 export const handler: Handler = async (
   event: any,
   context: Context,
@@ -11,14 +15,16 @@ export const handler: Handler = async (
 ) => {
   const appContext = await NestFactory.createApplicationContext(AuthModule);
   const authService = appContext.get(AuthService);
-  console.info("Registering user on cognito")
-  // console.log(JSON.stringify(event));
-
-  let response = await authService.adminCreateUser(event['email']);
-
-  return {
-    body: response,
-    statusCode: HttpStatus.OK
+  
+  if(event["eventType"] == EventTypes.REGISTER){
+    return await authService.adminCreateUser(event["data"]['email']);
+  }else if(event["eventType"] == EventTypes.LOGIN){
+    
+  }else{
+    return {
+      body: "Event type not found",
+      statusCode: HttpStatus.NOT_FOUND
+    }
   }
 
 };

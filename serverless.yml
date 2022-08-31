@@ -1,9 +1,17 @@
 service: 'lami-accounts'
 
 plugins:
+  - serverless-dotenv-plugin 
   - serverless-nest-monorepo
 
 provider:
   name: aws
   runtime: nodejs16.x
 
+functions:
+  auth:
+    handler: dist/apps/auth/main.handler
+    events:
+      - http:
+          method: ANY
+          path: '{proxy+}'
