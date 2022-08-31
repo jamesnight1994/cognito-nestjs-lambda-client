@@ -1,0 +1,27 @@
+service: auth
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+
+package:
+  excludeDevDependencies: true
+  individually: true
+  exclude:
+    - .gitignore
+    - README.md
+    - serverless.yml
+    - nest-cli.json
+    - .prettierrc
+
+functions:
+  auth:
+    handler: apps/auth/src/main.handler
+    events:
+      - http:
+          method: ANY
+          path: '{proxy+}'
