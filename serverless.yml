@@ -1,28 +1,9 @@
-service: serverless-example
+service: 'lami-accounts'
 
 plugins:
   - serverless-nest-monorepo
-  - serverless-offline
 
 provider:
   name: aws
   runtime: nodejs16.x
-
-package:
-  exclude:
-    - .gitignore
-    - README.md
-    - serverless.yml
-    - nest-cli.json
-    - .prettierrc
-  excludeDevDependencies: true
-  individually: true
-
-functions:
-  auth:
-    handler: dist/apps/auth/main.handler
-    events:
-      - http:
-          method: ANY
-          path: '{proxy+}'
 
