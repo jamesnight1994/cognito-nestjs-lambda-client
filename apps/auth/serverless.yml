@@ -1,7 +1,7 @@
-service: serverless-example
+service: auth
 
 plugins:
-  - serverless-nest-monorepo
+  - serverless-plugin-typescript
   - serverless-offline
 
 provider:
@@ -25,4 +25,3 @@ functions:
       - http:
           method: ANY
           path: '{proxy+}'
-
