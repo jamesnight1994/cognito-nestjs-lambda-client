@@ -1,7 +1,6 @@
 service: auth
 
 plugins:
-  - serverless-plugin-typescript
   - serverless-offline
 
 provider:
