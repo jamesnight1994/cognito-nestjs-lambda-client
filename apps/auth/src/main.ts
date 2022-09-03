@@ -20,7 +20,7 @@ export const handler: Handler = async (
   if(event["eventType"] == EventTypes.REGISTER){
     await authService.adminCreateUser(event["data"]['email'],callback)
   }else if(event["eventType"] == EventTypes.LOGIN){
-    
+    await authService.initiateAuth(event["data"]['email'],event["data"]['password'],'USER_PASSWORD_AUTH',callback)
   }else if(event["eventType"] == EventTypes.TEST){
     callback("Function is working",HttpStatus.OK)
   }else{

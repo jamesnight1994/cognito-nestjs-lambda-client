@@ -1,4 +1,4 @@
-import { AdminAddUserToGroupCommandOutput, AdminCreateUserCommand, AdminCreateUserCommandInput, CognitoIdentityProviderClient, UsernameExistsException } from '@aws-sdk/client-cognito-identity-provider';
+import { AdminAddUserToGroupCommandOutput, AdminCreateUserCommand, AdminCreateUserCommandInput, CognitoIdentityProviderClient, InitiateAuthCommand, InitiateAuthCommandInput, InitiateAuthCommandOutput, InvalidUserPoolConfigurationException, UsernameExistsException } from '@aws-sdk/client-cognito-identity-provider';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Callback } from 'aws-lambda';
 
@@ -22,24 +22,32 @@ export class AuthService {
             Username: email
         };
         let command = new AdminCreateUserCommand(this.newUser);
-
-        const response: any = {
-            message: "Bad Request",
-            httpCode: HttpStatus.BAD_REQUEST
-        }
-        
-            
         try{
-            let data = await this.client.send(command)
-            response.message = data.User,
-            response.httpCode = HttpStatus.CREATED
-            callback(response.message,response.httpCode);
+            let response = await this.client.send(command);
+            callback(null,response);
         }catch(e){
-            if(e instanceof UsernameExistsException){
-                callback(e, e.$response.statusCode);
-            }
+            callback(e);
         };
-        return response;
     }
     
+    async initiateAuth(email: string, password: string,type: string,callback: Callback) {
+        let input: InitiateAuthCommandInput = {
+            AuthFlow: type,
+            AuthParameters: {
+                USERNAME: email,
+                PASSWORD: password
+            },
+            ClientId: process.env.COGNITO_CLIENT_ID
+        };
+        let command: InitiateAuthCommand = new InitiateAuthCommand(input);
+
+        try{
+            let response = await this.client.send(command);
+            callback(null,response);
+        }catch(e){
+            callback(e);
+        }
+
+    
+    }
 }
