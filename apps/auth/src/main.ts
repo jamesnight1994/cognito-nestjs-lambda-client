@@ -7,7 +7,8 @@ import { AuthService } from './auth.service';
 export enum EventTypes  {
   REGISTER = 'REGISTER',
   LOGIN = 'LOGIN',
-  TEST = 'TEST'
+  TEST = 'TEST',
+  REQUIRED_CHANGE_PASSWORD = 'REQUIRED_CHANGE_PASSWORD'
 }
 export const handler: Handler = async (
   event: any,
@@ -20,7 +21,23 @@ export const handler: Handler = async (
   if(event["eventType"] == EventTypes.REGISTER){
     await authService.adminCreateUser(event["data"]['email'],callback)
   }else if(event["eventType"] == EventTypes.LOGIN){
-    await authService.initiateAuth(event["data"]['email'],event["data"]['password'],'USER_PASSWORD_AUTH',callback)
+    await authService.initiateAuth(
+      event["data"]['email'],
+      event["data"]['password'],
+      'USER_PASSWORD_AUTH',
+      callback
+    )
+  }else if(event["eventType"] == EventTypes.REQUIRED_CHANGE_PASSWORD){
+    await authService.respondToAuthChallenge(
+      'NEW_PASSWORD_REQUIRED',
+      {
+        USERNAME: event["data"]["email"],
+        PASSWORD: event["data"]["password"],
+        NEW_PASSWORD: event["data"]['new_password']
+      },
+      event["CHALLENGE_SESSION"],
+      callback
+    );
   }else if(event["eventType"] == EventTypes.TEST){
     callback("Function is working",HttpStatus.OK)
   }else{

@@ -1,4 +1,4 @@
-import { AdminAddUserToGroupCommandOutput, AdminCreateUserCommand, AdminCreateUserCommandInput, CognitoIdentityProviderClient, InitiateAuthCommand, InitiateAuthCommandInput, InitiateAuthCommandOutput, InvalidUserPoolConfigurationException, UsernameExistsException } from '@aws-sdk/client-cognito-identity-provider';
+import { AdminAddUserToGroupCommandOutput, AdminCreateUserCommand, AdminCreateUserCommandInput, ChallengeResponse, CognitoIdentityProviderClient, InitiateAuthCommand, InitiateAuthCommandInput, InitiateAuthCommandOutput, InvalidUserPoolConfigurationException, RespondToAuthChallengeCommand, UsernameExistsException } from '@aws-sdk/client-cognito-identity-provider';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Callback } from 'aws-lambda';
 
@@ -6,7 +6,7 @@ import { Callback } from 'aws-lambda';
 export class AuthService {
     private client: CognitoIdentityProviderClient;
     
-    public newUser: AdminCreateUserCommandInput;
+    private user: AdminCreateUserCommandInput;
     constructor(){
         this.client = new CognitoIdentityProviderClient({
             region: process.env.COGNITO_AWS_REGION
@@ -17,11 +17,11 @@ export class AuthService {
 
     // admin create user
     async adminCreateUser(email: string,callback: Callback){
-        this.newUser = {
+        this.user = {
             UserPoolId: process.env.COGNITO_USER_POOL_ID,
             Username: email
         };
-        let command = new AdminCreateUserCommand(this.newUser);
+        let command = new AdminCreateUserCommand(this.user);
         try{
             let response = await this.client.send(command);
             callback(null,response);
@@ -49,5 +49,23 @@ export class AuthService {
         }
 
     
+    }
+
+    // respond to auth challenge
+    async respondToAuthChallenge(challengeName: string,challengeResponses,session: string,callback: Callback) {
+        let input = {
+            ChallengeName: challengeName,
+            ClientId: process.env.COGNITO_CLIENT_ID,
+            Session: session,
+            ChallengeResponses: challengeResponses
+        };
+        let command: RespondToAuthChallengeCommand = new RespondToAuthChallengeCommand(input);
+
+        try{
+            let response = await this.client.send(command);
+            callback(null,response);
+        }catch(e){
+            callback(e);
+        }
     }
 }
