@@ -1,4 +1,4 @@
-import { AdminAddUserToGroupCommandOutput, AdminCreateUserCommand, AdminCreateUserCommandInput, CognitoIdentityProviderClient, UsernameExistsException } from '@aws-sdk/client-cognito-identity-provider';
+import { AdminAddUserToGroupCommandOutput, AdminCreateUserCommand, AdminCreateUserCommandInput, ChallengeResponse, CognitoIdentityProviderClient, InitiateAuthCommand, InitiateAuthCommandInput, InitiateAuthCommandOutput, InvalidUserPoolConfigurationException, RespondToAuthChallengeCommand, UsernameExistsException } from '@aws-sdk/client-cognito-identity-provider';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Callback } from 'aws-lambda';
 
@@ -6,7 +6,7 @@ import { Callback } from 'aws-lambda';
 export class AuthService {
     private client: CognitoIdentityProviderClient;
     
-    public newUser: AdminCreateUserCommandInput;
+    private user: AdminCreateUserCommandInput;
     constructor(){
         this.client = new CognitoIdentityProviderClient({
             region: process.env.COGNITO_AWS_REGION
@@ -17,29 +17,55 @@ export class AuthService {
 
     // admin create user
     async adminCreateUser(email: string,callback: Callback){
-        this.newUser = {
+        this.user = {
             UserPoolId: process.env.COGNITO_USER_POOL_ID,
             Username: email
         };
-        let command = new AdminCreateUserCommand(this.newUser);
-
-        const response: any = {
-            message: "Bad Request",
-            httpCode: HttpStatus.BAD_REQUEST
-        }
-        
-            
+        let command = new AdminCreateUserCommand(this.user);
         try{
-            let data = await this.client.send(command)
-            response.message = data.User,
-            response.httpCode = HttpStatus.CREATED
-            callback(response.message,response.httpCode);
+            let response = await this.client.send(command);
+            callback(null,response);
         }catch(e){
-            if(e instanceof UsernameExistsException){
-                callback(e, e.$response.statusCode);
-            }
+            callback(e);
         };
-        return response;
     }
     
+    async initiateAuth(email: string, password: string,type: string,callback: Callback) {
+        let input: InitiateAuthCommandInput = {
+            AuthFlow: type,
+            AuthParameters: {
+                USERNAME: email,
+                PASSWORD: password
+            },
+            ClientId: process.env.COGNITO_CLIENT_ID
+        };
+        let command: InitiateAuthCommand = new InitiateAuthCommand(input);
+
+        try{
+            let response = await this.client.send(command);
+            callback(null,response);
+        }catch(e){
+            callback(e);
+        }
+
+    
+    }
+
+    // respond to auth challenge
+    async respondToAuthChallenge(challengeName: string,challengeResponses,session: string,callback: Callback) {
+        let input = {
+            ChallengeName: challengeName,
+            ClientId: process.env.COGNITO_CLIENT_ID,
+            Session: session,
+            ChallengeResponses: challengeResponses
+        };
+        let command: RespondToAuthChallengeCommand = new RespondToAuthChallengeCommand(input);
+
+        try{
+            let response = await this.client.send(command);
+            callback(null,response);
+        }catch(e){
+            callback(e);
+        }
+    }
 }
