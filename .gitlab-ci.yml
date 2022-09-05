@@ -1,0 +1,52 @@
+image: node:18.7.0
+
+variables:
+  PACKAGE_NAME=package-$CI_JOB_ID.zip
+
+stages:
+  - build
+build-package-prod:
+  stage: build
+  script:
+    - apt-get update -y
+    - apt-get install awscli zip -y
+    - npm install
+    - npm run build auth
+    - [[ -f dist/apps/auth/main.js ]] && cd dist/apps/auth/ || exit 1
+    - cd dist/apps/auth/
+    - zip $PACKAGE_NAME main.js
+    - aws s3 cp $PACKAGE_NAME s3://$BUCKET_NAME/dev/auth
+    - echo $CI_JOB_ID
+  only:
+    - master
+  allow_failure: false
+build-package-sit:
+  stage: build
+  script:
+    - apt-get update -y
+    - apt-get install awscli zip -y
+    - npm install
+    - npm run build auth
+    - [[ -f dist/apps/auth/main.js ]] && cd dist/apps/auth/ || exit 1
+    - cd dist/apps/auth/
+    - zip $PACKAGE_NAME main.js
+    - aws s3 cp $PACKAGE_NAME s3://$BUCKET_NAME/dev/auth
+    - echo $CI_JOB_ID
+  only:
+    - testing
+  allow_failure: false
+build-package-dev:
+  stage: build
+  script:
+    - apt-get update -y
+    - apt-get install awscli zip -y
+    - npm install
+    - npm run build auth
+    - [[ -f dist/apps/auth/main.js ]] && cd dist/apps/auth/ || exit 1
+    - cd dist/apps/auth/
+    - zip $PACKAGE_NAME main.js
+    - aws s3 cp $PACKAGE_NAME s3://$BUCKET_NAME/dev/auth
+    - echo $CI_JOB_ID
+  only:
+    - develop
+  allow_failure: false
