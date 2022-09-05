@@ -42,7 +42,7 @@ build-package-dev:
     - npm run build auth
     - cd dist/apps/auth/
     - zip $PACKAGE_NAME main.js
-    - aws s3 cp $PACKAGE_NAME s3://$BUCKET_NAME/dev/auth
+    - aws s3 cp $PACKAGE_NAME s3://$BUCKET_NAME/dev/auth/$PACKAGE_NAME
     - echo $CI_JOB_ID
   only:
     - develop
