@@ -12,7 +12,6 @@ build-package-prod:
     - apt-get install awscli zip -y
     - npm install
     - npm run build auth
-    - [[ -f dist/apps/auth/main.js ]] && cd dist/apps/auth/ || exit 1
     - cd dist/apps/auth/
     - zip $PACKAGE_NAME main.js
     - aws s3 cp $PACKAGE_NAME s3://$BUCKET_NAME/dev/auth
@@ -27,7 +26,6 @@ build-package-sit:
     - apt-get install awscli zip -y
     - npm install
     - npm run build auth
-    - [[ -f dist/apps/auth/main.js ]] && cd dist/apps/auth/ || exit 1
     - cd dist/apps/auth/
     - zip $PACKAGE_NAME main.js
     - aws s3 cp $PACKAGE_NAME s3://$BUCKET_NAME/dev/auth
@@ -42,7 +40,6 @@ build-package-dev:
     - apt-get install awscli zip -y
     - npm install
     - npm run build auth
-    - [[ -f dist/apps/auth/main.js ]] && cd dist/apps/auth/ || exit 1
     - cd dist/apps/auth/
     - zip $PACKAGE_NAME main.js
     - aws s3 cp $PACKAGE_NAME s3://$BUCKET_NAME/dev/auth
