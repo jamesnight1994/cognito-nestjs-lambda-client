@@ -1,7 +1,7 @@
 image: node:18.7.0
 
 variables:
-  PACKAGE_NAME=package-$CI_JOB_ID.zip
+  PACKAGE_NAME: package-$CI_JOB_ID.zip
 
 stages:
   - build
