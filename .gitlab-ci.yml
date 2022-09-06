@@ -40,7 +40,7 @@ build-package-dev:
     - cd dist/apps/auth/
     - zip $PACKAGE_NAME main.js
     - aws s3 cp $PACKAGE_NAME s3://$BUCKET_NAME/$BUCKET_KEY
-    - aws s3api put-object-tagging --bucket $BUCKET_NAME --key $BUCKET_KEY --tagging '{"TagSet": [{ "Key": "ci_job_id", "Value": "'${CI_JOB_ID}'" }]}'
+    - aws s3api put-object-tagging --bucket $BUCKET_NAME --key $BUCKET_KEY --tagging '{"TagSet":[{"Key":"ci_job_id","Value":"'${CI_JOB_ID}'"}]}'
     - echo $CI_JOB_ID
   only:
     - develop
