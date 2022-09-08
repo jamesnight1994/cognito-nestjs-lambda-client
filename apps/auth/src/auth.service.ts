@@ -1,12 +1,11 @@
-import { AdminAddUserToGroupCommandOutput, AdminCreateUserCommand, AdminCreateUserCommandInput, ChallengeResponse, CognitoIdentityProviderClient, InitiateAuthCommand, InitiateAuthCommandInput, InitiateAuthCommandOutput, InvalidUserPoolConfigurationException, RespondToAuthChallengeCommand, UsernameExistsException } from '@aws-sdk/client-cognito-identity-provider';
-import { HttpStatus, Injectable } from '@nestjs/common';
+import { AdminCreateUserCommand, ForgotPasswordCommandInput, CognitoIdentityProviderClient, InitiateAuthCommand, InitiateAuthCommandInput, ForgotPasswordCommand, AdminCreateUserCommandInput, RespondToAuthChallengeCommand, AdminCreateUserCommandOutput, ConfirmForgotPasswordCommandInput, ConfirmForgotPasswordCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { Injectable } from '@nestjs/common';
 import { Callback } from 'aws-lambda';
 
 @Injectable()
 export class AuthService {
     private client: CognitoIdentityProviderClient;
-    
-    private user: AdminCreateUserCommandInput;
+
     constructor(){
         this.client = new CognitoIdentityProviderClient({
             region: process.env.COGNITO_AWS_REGION
@@ -17,11 +16,11 @@ export class AuthService {
 
     // admin create user
     async adminCreateUser(email: string,callback: Callback){
-        this.user = {
+        let data: AdminCreateUserCommandInput = {
             UserPoolId: process.env.COGNITO_USER_POOL_ID,
             Username: email
         };
-        let command = new AdminCreateUserCommand(this.user);
+        let command: AdminCreateUserCommand = new AdminCreateUserCommand(data);
         try{
             let response = await this.client.send(command);
             callback(null,response);
@@ -30,6 +29,26 @@ export class AuthService {
         };
     }
     
+    // confirm forgot password
+    async  confirmForgotPassword(email: string, password: string,code: string,callback: Callback) {
+        let data: ConfirmForgotPasswordCommandInput = {
+            ClientId: process.env.COGNITO_CLIENT_ID,
+            ConfirmationCode: code,
+            Username: email,
+            Password: password
+        };
+
+        let command = new ConfirmForgotPasswordCommand(data);
+
+        this.client.send(command);
+        try{
+            let response = await this.client.send(command);
+            callback(null,response);
+        }catch(e){
+            callback(e);
+        }
+    }
+
     async initiateAuth(email: string, password: string,type: string,callback: Callback) {
         let input: InitiateAuthCommandInput = {
             AuthFlow: type,
@@ -49,6 +68,25 @@ export class AuthService {
         }
 
     
+    }
+
+    // forgot password
+    async  forgotPassword(email: string,callback: Callback) {
+        let data: ForgotPasswordCommandInput = {
+            ClientId: process.env.COGNITO_CLIENT_ID,
+            Username: email
+        };
+
+        let command = new ForgotPasswordCommand(data);
+
+        this.client.send(command);
+        try{
+            let response = await this.client.send(command);
+            callback(null,response);
+        }catch(e){
+            callback(e);
+        }
+        
     }
 
     // respond to auth challenge
