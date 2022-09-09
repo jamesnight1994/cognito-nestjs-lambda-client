@@ -1,6 +1,7 @@
 import { AdminCreateUserCommand, ForgotPasswordCommandInput, CognitoIdentityProviderClient, InitiateAuthCommand, InitiateAuthCommandInput, ForgotPasswordCommand, AdminCreateUserCommandInput, RespondToAuthChallengeCommand, AdminCreateUserCommandOutput, ConfirmForgotPasswordCommandInput, ConfirmForgotPasswordCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { Injectable } from '@nestjs/common';
 import { Callback } from 'aws-lambda';
+import { CognitoJwtVerifier } from "aws-jwt-verify";
 
 @Injectable()
 export class AuthService {
@@ -105,5 +106,19 @@ export class AuthService {
         }catch(e){
             callback(e);
         }
+    }
+
+    async verifyToken(token: string,tokenUse: "access",callback: Callback) {
+        let verifier = CognitoJwtVerifier.create({
+            userPoolId: process.env.COGNITO_USER_POOL_ID,
+            tokenUse: tokenUse,
+            clientId: process.env.COGNITO_CLIENT_ID,
+          });
+        try {
+            const payload = await verifier.verify(token);
+            callback(null,payload);
+          } catch(e) {
+            return callback(e);
+          }
     }
 }

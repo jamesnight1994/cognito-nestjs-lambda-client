@@ -1,0 +1,28 @@
+[{
+    "sub": "f7756e17-2f65-4274-8e4a-013b4a464fa2",
+    "iss": "https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_NHoacWyyj",
+    "cognito:username": "f7756e17-2f65-4274-8e4a-013b4a464fa2",
+    "origin_jti": "cac7e8ab-a2ed-48ba-be14-39c17121c4d4",
+    "aud": "7ubm3t74c9jngdl08d4c37m0cf",
+    "event_id": "c70d56f3-e7d4-42ad-a58a-21b0d752b271",
+    "token_use": "id",
+    "auth_time": 1662681777,
+    "exp": 1662685377,
+    "iat": 1662681777,
+    "jti": "a940466a-e51b-4917-bb00-7db335150d77",
+    "email": "nightravenjames@gmail.com"
+},
+{
+    "sub": "f7756e17-2f65-4274-8e4a-013b4a464fa2",
+    "iss": "https://cognito-idp.eu-west-1.amazonaws.com/eu-west-1_NHoacWyyj",
+    "client_id": "7ubm3t74c9jngdl08d4c37m0cf",
+    "origin_jti": "cac7e8ab-a2ed-48ba-be14-39c17121c4d4",
+    "event_id": "c70d56f3-e7d4-42ad-a58a-21b0d752b271",
+    "token_use": "access",
+    "scope": "aws.cognito.signin.user.admin",
+    "auth_time": 1662681777,
+    "exp": 1662685377,
+    "iat": 1662681777,
+    "jti": "6778506d-414e-47ea-ab29-a3d65d9c2c00",
+    "username": "f7756e17-2f65-4274-8e4a-013b4a464fa2"
+}]
