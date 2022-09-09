@@ -5,10 +5,13 @@ import { AuthModule } from './auth.module';
 import { AuthService } from './auth.service';
 
 export enum EventTypes  {
+  CONFIRM_FORGOT_PASSWORD = 'CONFIRM_FORGOT_PASSWORD',
   REGISTER = 'REGISTER',
   LOGIN = 'LOGIN',
   TEST = 'TEST',
-  REQUIRED_CHANGE_PASSWORD = 'REQUIRED_CHANGE_PASSWORD'
+  FORGOT_PASSWORD = 'FORGOT_PASSWORD',
+  REQUIRED_CHANGE_PASSWORD = 'REQUIRED_CHANGE_PASSWORD',
+  VERIFY_TOKEN = 'VERIFY_TOKEN'
 }
 export const handler: Handler = async (
   event: any,
@@ -38,8 +41,14 @@ export const handler: Handler = async (
       event["CHALLENGE_SESSION"],
       callback
     );
+  }else if(event["eventType"] == EventTypes.FORGOT_PASSWORD){
+    await authService.forgotPassword(event["data"]["email"],callback);
+  }else if(event["eventType"] == EventTypes.CONFIRM_FORGOT_PASSWORD){
+    await authService.confirmForgotPassword(event["data"]["email"],event["data"]["password"],event["data"]["code"],callback);
+  }else if(event["eventType"] == EventTypes.VERIFY_TOKEN){
+    await authService.verifyToken(event["data"]["token"],event["data"]["type"],callback);
   }else if(event["eventType"] == EventTypes.TEST){
-    callback("Function is working",HttpStatus.OK)
+    callback("Function is working",HttpStatus.OK);
   }else{
     callback(new HttpException('Event not found', HttpStatus.NOT_FOUND))
   }
