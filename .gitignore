@@ -3,6 +3,9 @@
 /node_modules
 /.serverless
 
+# Envirinment
+.env
+
 # Logs
 logs
 *.log
