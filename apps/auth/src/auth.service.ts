@@ -2,6 +2,9 @@ import { AdminCreateUserCommand, ForgotPasswordCommandInput, CognitoIdentityProv
 import { Injectable } from '@nestjs/common';
 import { Callback } from 'aws-lambda';
 import { CognitoJwtVerifier } from "aws-jwt-verify";
+import axios from 'axios';
+
+
 
 @Injectable()
 export class AuthService {
@@ -13,6 +16,38 @@ export class AuthService {
         });
         
         
+    }
+
+    /**
+     * Get tenant access token credentials from tenant user pool
+     * @param clientId 
+     * @param clientSecret 
+     * @param userPoolId 
+     */
+    async getAccessToken(clientId: string, clientSecret:string ,userPoolId: string,callback){
+        let querystring = require('querystring');
+        let data = querystring.stringify({
+            'grant_type': 'client_credentials',
+            'client_id': clientId,
+            'client_secret': clientSecret,
+            'scopes': 'list'
+        })
+        try{
+            let COGNITO_DOMAIN = process.env.COGNITO_DOMAIN;
+            let response = await axios({
+                method: 'POST',
+                url: `${COGNITO_DOMAIN}/oauth2/token`,
+                headers: { 
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    // "Authorization": 'Basic ' + Buffer.from(clientId + ":" + clientSecret).toString('base64')
+                },
+                data: data
+            });
+            callback(null,response.data);
+            
+        }catch(e){
+            callback(e);
+        }
     }
 
     // admin create user

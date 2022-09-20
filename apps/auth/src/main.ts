@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 
 export enum EventTypes  {
   CONFIRM_FORGOT_PASSWORD = 'CONFIRM_FORGOT_PASSWORD',
+  GET_ACCESS_TOKEN = 'GET_ACCESS_TOKEN',
   REGISTER = 'REGISTER',
   LOGIN = 'LOGIN',
   TEST = 'TEST',
@@ -23,6 +24,8 @@ export const handler: Handler = async (
   
   if(event["eventType"] == EventTypes.REGISTER){
     await authService.adminCreateUser(event["data"]['email'],callback)
+  }else if(event["eventType"] == EventTypes.GET_ACCESS_TOKEN){
+    await authService.getAccessToken(event["data"]['client_id'],event["data"]['client_secret'],event["data"]['user_pool_id'],callback)
   }else if(event["eventType"] == EventTypes.LOGIN){
     await authService.initiateAuth(
       event["data"]['email'],
