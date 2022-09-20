@@ -22,9 +22,9 @@ export class AuthService {
      * Get tenant access token credentials from tenant user pool
      * @param clientId 
      * @param clientSecret 
-     * @param userPoolId 
+     * @param userPoolName 
      */
-    async getAccessToken(clientId: string, clientSecret:string ,userPoolId: string,callback){
+    async getAccessToken(clientId: string, clientSecret:string ,userPoolName: string,callback){
         let querystring = require('querystring');
         let data = querystring.stringify({
             'grant_type': 'client_credentials',
@@ -33,10 +33,10 @@ export class AuthService {
             'scopes': 'list'
         })
         try{
-            let COGNITO_DOMAIN = process.env.COGNITO_DOMAIN;
+            let COGNITO_DOMAIN = `https://${userPoolName}.auth.eu-west-1.amazoncognito.com/oauth2/token`;
             let response = await axios({
                 method: 'POST',
-                url: `${COGNITO_DOMAIN}/oauth2/token`,
+                url: COGNITO_DOMAIN,
                 headers: { 
                     "Content-Type": "application/x-www-form-urlencoded",
                     // "Authorization": 'Basic ' + Buffer.from(clientId + ":" + clientSecret).toString('base64')
