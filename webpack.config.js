@@ -1,3 +1,5 @@
+const { resolve } = require('path');
+
 module.exports = (options, webpack) => {
     const lazyImports = [
       '@nestjs/microservices/microservices-module',
@@ -5,7 +7,9 @@ module.exports = (options, webpack) => {
     ];
     const TerserPlugin = require('terser-webpack-plugin');
 
+    
     return {
+      resolve: { resolve },
       ...options,
       externals: [],
       optimization: {
@@ -23,6 +27,7 @@ module.exports = (options, webpack) => {
       },
       plugins: [
         ...options.plugins,
+        new webpack.IgnorePlugin({ resourceRegExp: /^pg-native$/ }),
         new webpack.IgnorePlugin({
           checkResource(resource) {
             if (lazyImports.includes(resource)) {

@@ -3,6 +3,9 @@ import { Injectable } from '@nestjs/common';
 import { Callback } from 'aws-lambda';
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 import axios from 'axios';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { App } from './entities/app.entity';
 
 
 
@@ -10,7 +13,9 @@ import axios from 'axios';
 export class AuthService {
     private client: CognitoIdentityProviderClient;
 
-    constructor(){
+    constructor(
+        @InjectRepository(App) private appsRepository: Repository<App>
+    ){
         this.client = new CognitoIdentityProviderClient({
             region: process.env.COGNITO_AWS_REGION
         });
@@ -22,9 +27,13 @@ export class AuthService {
      * Get tenant access token credentials from tenant user pool
      * @param clientId 
      * @param clientSecret 
-     * @param userPoolName 
      */
-    async getAccessToken(clientId: string, clientSecret:string ,userPoolName: string,callback){
+    async getAccessToken(clientId: string, clientSecret:string ,callback: Callback){
+        // TODO use the clientId to search for the tenant information on lami auth userpool
+        let apps = await this.appsRepository.find();
+        console.log(apps);
+        let userPoolName = null;
+
         let querystring = require('querystring');
         let data = querystring.stringify({
             'grant_type': 'client_credentials',
@@ -32,22 +41,22 @@ export class AuthService {
             'client_secret': clientSecret,
             'scopes': 'list'
         })
-        try{
-            let COGNITO_DOMAIN = `https://${userPoolName}.auth.eu-west-1.amazoncognito.com/oauth2/token`;
-            let response = await axios({
-                method: 'POST',
-                url: COGNITO_DOMAIN,
-                headers: { 
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    // "Authorization": 'Basic ' + Buffer.from(clientId + ":" + clientSecret).toString('base64')
-                },
-                data: data
-            });
-            callback(null,response.data);
+        // try{
+        //     let COGNITO_DOMAIN = `https://${userPoolName}.auth.eu-west-1.amazoncognito.com/oauth2/token`;
+        //     let response = await axios({
+        //         method: 'POST',
+        //         url: COGNITO_DOMAIN,
+        //         headers: { 
+        //             "Content-Type": "application/x-www-form-urlencoded",
+        //             // "Authorization": 'Basic ' + Buffer.from(clientId + ":" + clientSecret).toString('base64')
+        //         },
+        //         data: data
+        //     });
+        //     callback(null,response.data);
             
-        }catch(e){
-            callback(e);
-        }
+        // }catch(e){
+        //     callback(e);
+        // }
     }
 
     // admin create user
