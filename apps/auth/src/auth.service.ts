@@ -3,6 +3,9 @@ import { Injectable } from '@nestjs/common';
 import { Callback } from 'aws-lambda';
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 import axios from 'axios';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { App } from './entities/app.entity';
 
 
 
@@ -10,7 +13,9 @@ import axios from 'axios';
 export class AuthService {
     private client: CognitoIdentityProviderClient;
 
-    constructor(){
+    constructor(
+        @InjectRepository(App) private appsRepository: Repository<App>
+    ){
         this.client = new CognitoIdentityProviderClient({
             region: process.env.COGNITO_AWS_REGION
         });
@@ -22,9 +27,9 @@ export class AuthService {
      * Get tenant access token credentials from tenant user pool
      * @param clientId 
      * @param clientSecret 
-     * @param userPoolName 
      */
-    async getAccessToken(clientId: string, clientSecret:string ,userPoolName: string,callback){
+    async getAccessToken(clientId: string, clientSecret:string ,callback: Callback){
+        // TODO use the clientId to search for the tenant information on lami auth userpool
         let querystring = require('querystring');
         let data = querystring.stringify({
             'grant_type': 'client_credentials',
@@ -33,7 +38,12 @@ export class AuthService {
             'scopes': 'list'
         })
         try{
+            let tenant: App= await this.appsRepository.findOneBy({
+                client_id: clientId
+            });
+            let userPoolName = tenant.user_pool;
             let COGNITO_DOMAIN = `https://${userPoolName}.auth.eu-west-1.amazoncognito.com/oauth2/token`;
+            console.log("Fetching token from", COGNITO_DOMAIN);
             let response = await axios({
                 method: 'POST',
                 url: COGNITO_DOMAIN,

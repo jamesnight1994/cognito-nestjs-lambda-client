@@ -20,12 +20,12 @@ export const handler: Handler = async (
   callback: Callback,
 ) => {
   const appContext = await NestFactory.createApplicationContext(AuthModule);
-  const authService = appContext.get(AuthService,);
+  const authService = appContext.get(AuthService);
   
   if(event["eventType"] == EventTypes.REGISTER){
     await authService.adminCreateUser(event["data"]['email'],callback)
   }else if(event["eventType"] == EventTypes.GET_ACCESS_TOKEN){
-    await authService.getAccessToken(event["data"]['client_id'],event["data"]['client_secret'],event["data"]['user_pool_name'],callback)
+    await authService.getAccessToken(event["data"]['client_id'],event["data"]['client_secret'],callback)
   }else if(event["eventType"] == EventTypes.LOGIN){
     await authService.initiateAuth(
       event["data"]['email'],
