@@ -30,10 +30,6 @@ export class AuthService {
      */
     async getAccessToken(clientId: string, clientSecret:string ,callback: Callback){
         // TODO use the clientId to search for the tenant information on lami auth userpool
-        let apps = await this.appsRepository.find();
-        console.log(apps);
-        let userPoolName = null;
-
         let querystring = require('querystring');
         let data = querystring.stringify({
             'grant_type': 'client_credentials',
@@ -41,22 +37,27 @@ export class AuthService {
             'client_secret': clientSecret,
             'scopes': 'list'
         })
-        // try{
-        //     let COGNITO_DOMAIN = `https://${userPoolName}.auth.eu-west-1.amazoncognito.com/oauth2/token`;
-        //     let response = await axios({
-        //         method: 'POST',
-        //         url: COGNITO_DOMAIN,
-        //         headers: { 
-        //             "Content-Type": "application/x-www-form-urlencoded",
-        //             // "Authorization": 'Basic ' + Buffer.from(clientId + ":" + clientSecret).toString('base64')
-        //         },
-        //         data: data
-        //     });
-        //     callback(null,response.data);
+        try{
+            let tenant: App= await this.appsRepository.findOneBy({
+                client_id: clientId
+            });
+            let userPoolName = tenant.user_pool;
+            let COGNITO_DOMAIN = `https://${userPoolName}.auth.eu-west-1.amazoncognito.com/oauth2/token`;
+            console.log("Fetching token from", COGNITO_DOMAIN);
+            let response = await axios({
+                method: 'POST',
+                url: COGNITO_DOMAIN,
+                headers: { 
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    // "Authorization": 'Basic ' + Buffer.from(clientId + ":" + clientSecret).toString('base64')
+                },
+                data: data
+            });
+            callback(null,response.data);
             
-        // }catch(e){
-        //     callback(e);
-        // }
+        }catch(e){
+            callback(e);
+        }
     }
 
     // admin create user
