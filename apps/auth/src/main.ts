@@ -23,7 +23,7 @@ export const handler: Handler = async (
   const authService = appContext.get(AuthService);
   
   if(event["eventType"] == EventTypes.REGISTER){
-    await authService.adminCreateUser(event["data"]['email'],callback)
+    await authService.adminCreateUser(event["data"]['email'],event["data"]["userPoolId"],callback)
   }else if(event["eventType"] == EventTypes.GET_ACCESS_TOKEN){
     await authService.getAccessToken(event["data"]['client_id'],event["data"]['client_secret'],callback)
   }else if(event["eventType"] == EventTypes.LOGIN){

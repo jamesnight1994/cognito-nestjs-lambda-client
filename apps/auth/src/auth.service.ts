@@ -61,9 +61,10 @@ export class AuthService {
     }
 
     // admin create user
-    async adminCreateUser(email: string,callback: Callback){
+    async adminCreateUser(email: string,userPoolId: string,callback: Callback){
+        // verify access token
         let data: AdminCreateUserCommandInput = {
-            UserPoolId: process.env.COGNITO_USER_POOL_ID,
+            UserPoolId: userPoolId,
             Username: email
         };
         let command: AdminCreateUserCommand = new AdminCreateUserCommand(data);
