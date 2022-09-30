@@ -3,9 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Callback } from 'aws-lambda';
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 import axios from 'axios';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { App } from './entities/app.entity';
+import { App } from './entities/app';
 import { appDataSource } from './app-data-source';
 
 
@@ -38,9 +36,12 @@ export class AuthService {
         })
         // access by lazy loader
         try{
+            await appDataSource.initialize();
             let tenant=  await appDataSource.getRepository(App).findOneBy({
                 client_id: clientId
-            });
+            }); 
+            await appDataSource.destroy()
+            console.log(tenant);
             let userPoolName = tenant.user_pool;
             let COGNITO_DOMAIN = `https://${userPoolName}.auth.eu-west-1.amazoncognito.com/oauth2/token`;
             console.log("Fetching token from", COGNITO_DOMAIN);
