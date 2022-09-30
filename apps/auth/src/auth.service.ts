@@ -1,11 +1,12 @@
 import { AdminCreateUserCommand, ForgotPasswordCommandInput, CognitoIdentityProviderClient, InitiateAuthCommand, InitiateAuthCommandInput, ForgotPasswordCommand, AdminCreateUserCommandInput, RespondToAuthChallengeCommand, AdminCreateUserCommandOutput, ConfirmForgotPasswordCommandInput, ConfirmForgotPasswordCommand } from '@aws-sdk/client-cognito-identity-provider';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Callback } from 'aws-lambda';
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 import axios from 'axios';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { App } from './entities/app.entity';
+import { appDataSource } from './app-data-source';
 
 
 
@@ -13,9 +14,7 @@ import { App } from './entities/app.entity';
 export class AuthService {
     private client: CognitoIdentityProviderClient;
 
-    constructor(
-        @InjectRepository(App) private appsRepository: Repository<App>
-    ){
+    constructor(){
         this.client = new CognitoIdentityProviderClient({
             region: process.env.COGNITO_AWS_REGION
         });
@@ -37,8 +36,9 @@ export class AuthService {
             'client_secret': clientSecret,
             'scopes': 'list'
         })
+        // access by lazy loader
         try{
-            let tenant: App= await this.appsRepository.findOneBy({
+            let tenant=  await appDataSource.getRepository(App).findOneBy({
                 client_id: clientId
             });
             let userPoolName = tenant.user_pool;
