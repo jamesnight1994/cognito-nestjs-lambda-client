@@ -97,14 +97,14 @@ export class AuthService {
         }
     }
 
-    async initiateAuth(email: string, password: string,type: string,callback: Callback) {
+    async initiateAuth(email: string, password: string,type: string,clientId: string,callback: Callback) {
         let input: InitiateAuthCommandInput = {
             AuthFlow: type,
             AuthParameters: {
                 USERNAME: email,
                 PASSWORD: password
             },
-            ClientId: process.env.COGNITO_CLIENT_ID
+            ClientId: clientId
         };
         let command: InitiateAuthCommand = new InitiateAuthCommand(input);
 

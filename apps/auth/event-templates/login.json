@@ -2,7 +2,8 @@
     "eventType": "LOGIN",
     "data": {
         "email": "nightravenjames@gmail.com",
-        "password": "Qk:RM8UL"
+        "password": "Qk:RM8UL",
+        "clientId": "kr1gqgfo8ap61ohf6ed6fha20"
         
     }
 }

@@ -31,6 +31,7 @@ export const handler: Handler = async (
       event["data"]['email'],
       event["data"]['password'],
       'USER_PASSWORD_AUTH',
+      event["data"]['clientId'],
       callback
     )
   }else if(event["eventType"] == EventTypes.REQUIRED_CHANGE_PASSWORD){
