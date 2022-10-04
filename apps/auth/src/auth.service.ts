@@ -31,7 +31,7 @@ export class AuthService {
         let data = querystring.stringify({
             'grant_type': 'client_credentials',
             'client_id': clientId,
-            'client_secret': clientSecret,
+            // 'client_secret': clientSecret,
             'scopes': 'list'
         })
         // access by lazy loader
@@ -45,11 +45,12 @@ export class AuthService {
             let userPoolName = tenant.user_pool;
             let COGNITO_DOMAIN = `https://${userPoolName}.auth.eu-west-1.amazoncognito.com/oauth2/token`;
             console.log("Fetching token from", COGNITO_DOMAIN);
+            console.log('data ',data);
             let response = await axios({
                 method: 'POST',
                 url: COGNITO_DOMAIN,
                 headers: { 
-                    "Content-Type": "application/x-www-form-urlencoded",
+                    "Content-Type": "application/x-www-form-urlencoded"
                     // "Authorization": 'Basic ' + Buffer.from(clientId + ":" + clientSecret).toString('base64')
                 },
                 data: data
