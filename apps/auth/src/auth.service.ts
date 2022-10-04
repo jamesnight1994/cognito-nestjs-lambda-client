@@ -1,10 +1,12 @@
-import { AdminCreateUserCommand, ForgotPasswordCommandInput, CognitoIdentityProviderClient, InitiateAuthCommand, InitiateAuthCommandInput, ForgotPasswordCommand, AdminCreateUserCommandInput, RespondToAuthChallengeCommand, AdminCreateUserCommandOutput, ConfirmForgotPasswordCommandInput, ConfirmForgotPasswordCommand } from '@aws-sdk/client-cognito-identity-provider';
+import { AdminCreateUserCommand, ForgotPasswordCommandInput, CognitoIdentityProviderClient, InitiateAuthCommand, InitiateAuthCommandInput, ForgotPasswordCommand, AdminCreateUserCommandInput, RespondToAuthChallengeCommand, AdminCreateUserCommandOutput, ConfirmForgotPasswordCommandInput, ConfirmForgotPasswordCommand, AdminInitiateAuthCommandInput } from '@aws-sdk/client-cognito-identity-provider';
 import { Inject, Injectable } from '@nestjs/common';
 import { Callback } from 'aws-lambda';
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 import axios from 'axios';
 import { App } from './entities/app';
 import { appDataSource } from './app-data-source';
+import { createHmac } from 'crypto';
+import { CognitoAccessTokenPayload } from 'aws-jwt-verify/jwt-model';
 
 
 
@@ -98,14 +100,27 @@ export class AuthService {
         }
     }
 
-    async initiateAuth(email: string, password: string,type: string,clientId: string,callback: Callback) {
-        let input: InitiateAuthCommandInput = {
+    async initiateAuth(email: string, password: string,accessToken: string,type: string,callback: Callback) {
+        const decodedAcessObject =  await this.verifyToken(accessToken,'access');
+        await appDataSource.initialize();
+        let tenant=  await appDataSource.getRepository(App).findOneBy({
+            client_id: decodedAcessObject.client_id
+         }); 
+        await appDataSource.destroy();
+        console.log(tenant);
+        const hasher = createHmac('sha256', tenant.client_secret);
+        hasher.update(`${email}${tenant.client_id}`);
+        const secretHash = hasher.digest('base64');
+
+        let input: AdminInitiateAuthCommandInput = {
             AuthFlow: type,
             AuthParameters: {
                 USERNAME: email,
-                PASSWORD: password
+                PASSWORD: password,
+                SECRET_HASH: secretHash
             },
-            ClientId: clientId
+            ClientId: tenant.client_id,
+            UserPoolId: tenant.cognito_userpool_id
         };
         let command: InitiateAuthCommand = new InitiateAuthCommand(input);
 
@@ -156,17 +171,14 @@ export class AuthService {
         }
     }
 
-    async verifyToken(token: string,tokenUse: "access",callback: Callback) {
+    async verifyToken(token: string,tokenUse: "access"): Promise<CognitoAccessTokenPayload> {
         let verifier = CognitoJwtVerifier.create({
-            userPoolId: process.env.COGNITO_USER_POOL_ID,
+            userPoolId: 'eu-west-1_yndJYKWT4',
             tokenUse: tokenUse,
-            clientId: process.env.COGNITO_CLIENT_ID,
+            clientId: '7btmpg6nb8lq1unsq2cm1cm85h',
           });
-        try {
-            const payload = await verifier.verify(token);
-            callback(null,payload);
-          } catch(e) {
-            return callback(e);
-          }
+          
+          const payload = verifier.verify(token);
+          return await payload;
     }
 }

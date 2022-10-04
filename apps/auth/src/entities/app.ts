@@ -13,4 +13,10 @@ export class App {
 
     @Column()
     user_pool: string;
+
+    @Column()
+    client_secret: string;
+
+    @Column()
+    cognito_userpool_id: string;
 }

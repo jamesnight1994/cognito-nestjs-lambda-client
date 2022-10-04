@@ -11,8 +11,7 @@ export enum EventTypes  {
   LOGIN = 'LOGIN',
   TEST = 'TEST',
   FORGOT_PASSWORD = 'FORGOT_PASSWORD',
-  REQUIRED_CHANGE_PASSWORD = 'REQUIRED_CHANGE_PASSWORD',
-  VERIFY_TOKEN = 'VERIFY_TOKEN'
+  REQUIRED_CHANGE_PASSWORD = 'REQUIRED_CHANGE_PASSWORD'
 }
 export const handler: Handler = async (
   event: any,
@@ -30,8 +29,8 @@ export const handler: Handler = async (
     await authService.initiateAuth(
       event["data"]['email'],
       event["data"]['password'],
+      event["data"]['accessToken'],
       'USER_PASSWORD_AUTH',
-      event["data"]['clientId'],
       callback
     )
   }else if(event["eventType"] == EventTypes.REQUIRED_CHANGE_PASSWORD){
@@ -49,8 +48,6 @@ export const handler: Handler = async (
     await authService.forgotPassword(event["data"]["email"],callback);
   }else if(event["eventType"] == EventTypes.CONFIRM_FORGOT_PASSWORD){
     await authService.confirmForgotPassword(event["data"]["email"],event["data"]["password"],event["data"]["code"],callback);
-  }else if(event["eventType"] == EventTypes.VERIFY_TOKEN){
-    await authService.verifyToken(event["data"]["token"],event["data"]["type"],callback);
   }else if(event["eventType"] == EventTypes.TEST){
     callback("Function is working",HttpStatus.OK);
   }else{
