@@ -1,4 +1,4 @@
-import { AdminCreateUserCommand, ForgotPasswordCommandInput, CognitoIdentityProviderClient, InitiateAuthCommand, InitiateAuthCommandInput, ForgotPasswordCommand, AdminCreateUserCommandInput, RespondToAuthChallengeCommand, AdminCreateUserCommandOutput, ConfirmForgotPasswordCommandInput, ConfirmForgotPasswordCommand, AdminInitiateAuthCommandInput } from '@aws-sdk/client-cognito-identity-provider';
+import { AdminCreateUserCommand, ForgotPasswordCommandInput, CognitoIdentityProviderClient, InitiateAuthCommand, InitiateAuthCommandInput, ForgotPasswordCommand, AdminCreateUserCommandInput, RespondToAuthChallengeCommand, AdminCreateUserCommandOutput, ConfirmForgotPasswordCommandInput, ConfirmForgotPasswordCommand, AdminInitiateAuthCommandInput, InitiateAuthCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
 import { Inject, Injectable } from '@nestjs/common';
 import { Callback } from 'aws-lambda';
 import { CognitoJwtVerifier } from "aws-jwt-verify";
@@ -123,8 +123,24 @@ export class AuthService {
         let command: InitiateAuthCommand = new InitiateAuthCommand(input);
 
         try{
-            let response = await this.client.send(command);
-            callback(null,response);
+            let response: InitiateAuthCommandOutput = await this.client.send(command);
+            let data: object;
+            if(response.AuthenticationResult != undefined){
+                data = {
+                    access_token: response.AuthenticationResult.AccessToken,
+                    token_type: response.AuthenticationResult.TokenType,
+                    expires_in: response.AuthenticationResult.RefreshToken,
+                    refresh_token: response.$metadata
+                  }
+                callback(null, data);
+            }else if(response.ChallengeName == 'NEW_PASSWORD_REQUIRED'){
+                data = {
+                    status: response.$metadata,
+                    challenge_name: response.ChallengeName,
+                    session: response.Session
+                }
+                callback(null, data);
+            }
         }catch(e){
             callback(e);
         }
