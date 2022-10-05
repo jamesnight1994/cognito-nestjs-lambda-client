@@ -130,7 +130,7 @@ export class AuthService {
                     access_token: response.AuthenticationResult.AccessToken,
                     token_type: response.AuthenticationResult.TokenType,
                     expires_in: response.AuthenticationResult.RefreshToken,
-                    refresh_token: response.$metadata
+                    refresh_token: response.AuthenticationResult.RefreshToken
                   }
                 callback(null, data);
             }else if(response.ChallengeName == 'NEW_PASSWORD_REQUIRED'){
