@@ -135,7 +135,6 @@ export class AuthService {
                 callback(null, data);
             }else if(response.ChallengeName == 'NEW_PASSWORD_REQUIRED'){
                 data = {
-                    status: response.$metadata,
                     challenge_name: response.ChallengeName,
                     session: response.Session
                 }
