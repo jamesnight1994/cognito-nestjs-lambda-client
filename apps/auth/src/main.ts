@@ -29,7 +29,7 @@ export const handler: Handler = async (
     await authService.initiateAuth(
       event["data"]['email'],
       event["data"]['password'],
-      event["data"]['accessToken'],
+      event["data"]['clientId'],
       'USER_PASSWORD_AUTH',
       callback
     )

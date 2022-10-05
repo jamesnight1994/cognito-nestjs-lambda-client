@@ -100,11 +100,10 @@ export class AuthService {
         }
     }
 
-    async initiateAuth(email: string, password: string,accessToken: string,type: string,callback: Callback) {
-        const decodedAcessObject =  await this.verifyToken(accessToken,'access');
+    async initiateAuth(email: string, password: string,clientId: string,type: string,callback: Callback) {
         await appDataSource.initialize();
         let tenant=  await appDataSource.getRepository(App).findOneBy({
-            client_id: decodedAcessObject.client_id
+            client_id: clientId
          }); 
         await appDataSource.destroy();
         console.log(tenant);
@@ -112,15 +111,14 @@ export class AuthService {
         hasher.update(`${email}${tenant.client_id}`);
         const secretHash = hasher.digest('base64');
 
-        let input: AdminInitiateAuthCommandInput = {
+        let input: InitiateAuthCommandInput = {
             AuthFlow: type,
             AuthParameters: {
                 USERNAME: email,
                 PASSWORD: password,
                 SECRET_HASH: secretHash
             },
-            ClientId: tenant.client_id,
-            UserPoolId: tenant.cognito_userpool_id
+            ClientId: tenant.client_id
         };
         let command: InitiateAuthCommand = new InitiateAuthCommand(input);
 
