@@ -1,4 +1,4 @@
-import { AdminCreateUserCommand, ForgotPasswordCommandInput, CognitoIdentityProviderClient, ForgotPasswordCommand, AdminCreateUserCommandInput, RespondToAuthChallengeCommand, ConfirmForgotPasswordCommandInput, ConfirmForgotPasswordCommand, AdminInitiateAuthCommandInput, AdminInitiateAuthCommand, AdminInitiateAuthCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
+import { AdminCreateUserCommand, ForgotPasswordCommandInput, CognitoIdentityProviderClient, ForgotPasswordCommand, AdminCreateUserCommandInput, RespondToAuthChallengeCommand, ConfirmForgotPasswordCommandInput, ConfirmForgotPasswordCommand, AdminInitiateAuthCommandInput, AdminInitiateAuthCommand, AdminInitiateAuthCommandOutput, InitiateAuthCommand, InitiateAuthCommandInput, InitiateAuthCommandOutput } from '@aws-sdk/client-cognito-identity-provider';
 import { Inject, Injectable } from '@nestjs/common';
 import { Callback } from 'aws-lambda';
 import { CognitoJwtVerifier } from "aws-jwt-verify";
@@ -111,20 +111,19 @@ export class AuthService {
         const secretHash = hasher.digest('base64');
 
         
-        let input: AdminInitiateAuthCommandInput = {
+        let input: InitiateAuthCommandInput = {
             AuthFlow: type,
             AuthParameters: {
                 USERNAME: email,
                 PASSWORD: password,
                 SECRET_HASH: secretHash
             },
-            ClientId: tenant.client_id,
-            UserPoolId: tenant.cognito_userpool_id
+            ClientId: tenant.client_id
         };
-        let command: AdminInitiateAuthCommand = new AdminInitiateAuthCommand(input);
+        let command: InitiateAuthCommand = new InitiateAuthCommand(input);
 
         try{
-            let response: AdminInitiateAuthCommandOutput = await this.client.send(command);
+            let response: InitiateAuthCommandOutput = await this.client.send(command);
             let data: object;
             if(response.AuthenticationResult != undefined){
                 data = {
