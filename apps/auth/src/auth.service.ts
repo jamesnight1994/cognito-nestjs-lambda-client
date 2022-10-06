@@ -106,7 +106,6 @@ export class AuthService {
             client_id: clientId
          }); 
         await appDataSource.destroy();
-        console.log(tenant);
         const hasher = createHmac('sha256', tenant.client_secret);
         hasher.update(`${email}${tenant.client_id}`);
         const secretHash = hasher.digest('base64');
