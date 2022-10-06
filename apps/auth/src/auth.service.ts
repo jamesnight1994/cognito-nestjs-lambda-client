@@ -137,7 +137,7 @@ export class AuthService {
                     challenge_name: response.ChallengeName,
                     session: response.Session
                 }
-                callback(null, data);
+                callback("NEW_PASSWORD_REQUIRED", data);
             }
         }catch(e){
             callback(e);
