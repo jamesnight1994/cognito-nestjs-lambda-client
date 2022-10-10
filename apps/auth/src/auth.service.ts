@@ -97,16 +97,16 @@ export class AuthService {
             };
             // register user on cognito
             const adminCreateUserCommandInput: AdminCreateUserCommand = new AdminCreateUserCommand(input);
-            await this.client.send(adminCreateUserCommandInput);
+            let { User } = await this.client.send(adminCreateUserCommandInput);
 
             // Set user password...
-            let { AuthenticationResult } =  await this.setUserPassword({
+            this.setUserPassword({
                 email: newUser.email,
                 password: newUser.password,
                 userPoolId: newUser.userPoolId
             }, tenant);
             
-            callback(null, AuthenticationResult)
+            callback(null, User);
         } catch (e) {
             callback(e);
         }
