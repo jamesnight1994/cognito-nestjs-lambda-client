@@ -4,6 +4,10 @@ import { Callback, Context, Handler } from 'aws-lambda/handler';
 import { AuthModule } from './auth.module';
 import { AuthService } from './auth.service';
 
+type AuthEvent = {
+  eventType: string,
+  data: {}
+}
 export enum EventTypes  {
   CONFIRM_FORGOT_PASSWORD = 'CONFIRM_FORGOT_PASSWORD',
   GET_ACCESS_TOKEN = 'GET_ACCESS_TOKEN',
@@ -20,9 +24,14 @@ export const handler: Handler = async (
 ) => {
   const appContext = await NestFactory.createApplicationContext(AuthModule);
   const authService = appContext.get(AuthService);
+  let authEvent = JSON.parse(JSON.stringify(event));
+  console.info(authEvent);
   
   if(event["eventType"] == EventTypes.REGISTER){
-    await authService.adminCreateUser(event["data"]['email'],event["data"]["userPoolId"],callback)
+    await authService.adminCreateUser(
+        authEvent.data,
+        callback
+      )
   }else if(event["eventType"] == EventTypes.GET_ACCESS_TOKEN){
     await authService.getAccessToken(event["data"]['client_id'],event["data"]['client_secret'],callback)
   }else if(event["eventType"] == EventTypes.LOGIN){
@@ -49,7 +58,7 @@ export const handler: Handler = async (
   }else if(event["eventType"] == EventTypes.CONFIRM_FORGOT_PASSWORD){
     await authService.confirmForgotPassword(event["data"]["email"],event["data"]["password"],event["data"]["code"],callback);
   }else if(event["eventType"] == EventTypes.TEST){
-    callback("Function is working",HttpStatus.OK);
+    callback(null,"Function is working");
   }else{
     callback(new HttpException('Event not found', HttpStatus.NOT_FOUND))
   }

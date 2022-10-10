@@ -2,7 +2,8 @@
     "eventType": "REGISTER",
     "data": {
         "email": "nightravenjames@gmail.com",
-        "userPoolId": "eu-west-1_yndJYKWT4"
+        "userPoolId": "eu-west-1_yndJYKWT4",
+        "password": "Kijanamsafi@30"
         
     }
 }
