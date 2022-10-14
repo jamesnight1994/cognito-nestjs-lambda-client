@@ -16,3 +16,9 @@ functions:
       - http:
           method: ANY
           path: '{proxy+}'
+  lami-accounts:
+    handler: dist/apps/lami-accounts/main.handler
+    events:
+      - http:
+          method: ANY
+          path: '{proxy+}'
