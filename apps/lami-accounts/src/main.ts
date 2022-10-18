@@ -3,7 +3,7 @@ import { HttpStatus } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { Callback, Context, Handler } from 'aws-lambda';
 import { AppModule } from './app.module';
-import { AuthService } from './auth/auth.service';
+import { AppService } from './app.service';
 
 
 export const handler: Handler = async (
@@ -12,15 +12,6 @@ export const handler: Handler = async (
   callback: Callback,
 ) => {
   const appContext = await NestFactory.createApplicationContext(AppModule);
-  const authService = appContext.get(AuthService);
-  console.info("Registering user on cognito")
-  // console.log(JSON.stringify(event));
-
-  let response = await authService.adminCreateUser(event['email']);
-
-  return {
-    body: response,
-    statusCode: HttpStatus.OK
-  }
-
+  const test = appContext.get(AppService);
+  callback(null,await test.createTenantUserPoolAndClient('Diablo'));
 };

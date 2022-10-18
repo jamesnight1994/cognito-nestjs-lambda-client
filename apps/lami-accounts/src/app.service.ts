@@ -1,6 +1,7 @@
 import { CognitoIdentityProviderClient, CreateResourceServerCommand, CreateUserPoolClientCommand, CreateUserPoolCommand, CreateUserPoolCommandOutput, CreateUserPoolDomainCommand } from '@aws-sdk/client-cognito-identity-provider';
 import { Injectable } from '@nestjs/common';
 import { create } from 'domain';
+import { config } from 'process';
 import { dataSource } from './data.source';
 import { App } from './entities/app';
 
@@ -20,9 +21,9 @@ export class AppService {
   async createTenantUserPoolAndClient(tenantName: string): Promise<any>{
     // create userpool
     const createUserPoolCommand = new CreateUserPoolCommand({
-      PoolName: tenantName,
+      PoolName: `${tenantName.toLowerCase()}-${process.env.NODE_ENV}`,
       UsernameAttributes: ['email'],
-      MfaConfiguration: 'No MFA',
+      MfaConfiguration: 'OFF',
       
     });
     // create user pool
@@ -43,14 +44,14 @@ export class AppService {
 
     // create userpool domain
     const createUserpoolDomainCommand = new CreateUserPoolDomainCommand({
-      Domain: tenantName,
+      Domain: `${tenantName.toLowerCase()}-${process.env.NODE_ENV}`,
       UserPoolId: UserPool.Id
     });
     this.client.send(createUserpoolDomainCommand);
 
     // create resource server
     const createResourceServerCommand = new CreateResourceServerCommand({
-      Name:'General API access',
+      Name: `${tenantName.toLowerCase()}-${process.env.NODE_ENV}`,
       UserPoolId: UserPool.Id,
       Identifier: 'https://localhost:8080/api/v2/',
       Scopes: [
@@ -60,6 +61,7 @@ export class AppService {
         }
       ]
     });
+    this.client.send(createResourceServerCommand);
 
     return { UserPool };
   }
