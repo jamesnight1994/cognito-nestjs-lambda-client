@@ -38,7 +38,19 @@ export class AuthService {
      * @param clientSecret 
      */
     async getAccessToken(clientId: string, clientSecret: string, callback: Callback) {
-        // TODO use the clientId to search for the tenant information on lami auth userpool
+        // TODO search if  legacy credentials
+        let app = await this.getAppBy({
+            auth0_id: clientId
+        });
+
+        // if legacy client id is found:(false)
+        if(app != null){
+            // ...clientId arg is equal client_id(that belongs to cognito) attribute
+            console.log("Legacy client_id found");
+            clientId = app.client_id
+            console.log("Client Id is now",clientId)
+        }
+
         let querystring = require('querystring');
         let data = querystring.stringify({
             'grant_type': 'client_credentials',
@@ -76,7 +88,7 @@ export class AuthService {
 
     // admin create user
     async adminCreateUser(newUser: NewUser, callback: Callback) {
-        let tenant = await this.getTenantBy({
+        let tenant = await this.getAppBy({
             cognito_userpool_id: newUser.userPoolId
         });
         try {
@@ -272,7 +284,7 @@ export class AuthService {
         // return RespondToAuthChallengeCommand
     }
 
-    private async getTenantBy(app) {
+    private async getAppBy(app) {
         await appDataSource.initialize();
         let tenant = await appDataSource.getRepository(App).findOneBy(app);
         await appDataSource.destroy();

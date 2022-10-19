@@ -3,6 +3,9 @@ import { Column, Entity, PrimaryColumn } from "typeorm";
 @Entity('apps')
 export class App {
     @PrimaryColumn()
+    auth0_id: string
+
+    @Column()
     tenant_id: number;
     
     @Column()
