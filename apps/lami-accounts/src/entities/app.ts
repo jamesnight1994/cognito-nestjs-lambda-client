@@ -1,9 +1,19 @@
-import { Column, Entity, PrimaryColumn } from "typeorm";
+import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn } from "typeorm";
+import { Tenant } from "./tenant";
 
 @Entity('apps')
 export class App {
     @PrimaryColumn()
-    tenant_id: number;
+    auth0_id: string;
+    
+    @Column()
+    cognito_userpool_id: string;
+
+    @OneToOne(() => Tenant,{onUpdate: 'CASCADE', onDelete: 'CASCADE', eager: true})
+    @JoinColumn({
+        name: 'tenant_id'
+    })
+    tenant: Tenant;
     
     @Column()
     client_id: string;
@@ -17,6 +27,4 @@ export class App {
     @Column()
     client_secret: string;
 
-    @Column()
-    cognito_userpool_id: string;
 }

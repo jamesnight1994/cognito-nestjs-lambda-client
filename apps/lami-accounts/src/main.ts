@@ -13,5 +13,5 @@ export const handler: Handler = async (
 ) => {
   const appContext = await NestFactory.createApplicationContext(AppModule);
   const test = appContext.get(AppService);
-  callback(null,await test.createTenantUserPoolAndClient('Diablo'));
+  callback(null,await test.registerTenantApps(['IVY7rri8QsZ6yW5w8PpfgF7N51SE1o05']))
 };
