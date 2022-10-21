@@ -85,13 +85,34 @@ export class AppService {
     let poolName = `${tenantName.toLowerCase().replace(/ /g,'')}-${process.env.NODE_ENV}`;
     let uuid = `${poolName}-${new Date().valueOf()}`;
     const createUserPoolCommand = new CreateUserPoolCommand({
-      PoolName: uuid,
+      PoolName: poolName,
       UsernameAttributes: ['email'],
       MfaConfiguration: 'OFF',
       
     });
     // create user pool
     const { UserPool }= await this.client.send(createUserPoolCommand);
+
+    // create resource server
+    const createResourceServerCommand = new CreateResourceServerCommand({
+      Name: poolName,
+      UserPoolId: UserPool.Id,
+      Identifier: 'https://localhost:8080/api/v2',
+      Scopes: [
+        {
+          ScopeName: 'access',
+          ScopeDescription: 'General access to API'
+        }
+      ]
+    });
+    let { ResourceServer } = await this.client.send(createResourceServerCommand);
+
+    // create userpool domain
+    const createUserpoolDomainCommand = new CreateUserPoolDomainCommand({
+      Domain: poolName,
+      UserPoolId: UserPool.Id
+    });
+    this.client.send(createUserpoolDomainCommand);
 
     // default client
     const createUserPoolClientCommand = new CreateUserPoolClientCommand({
@@ -101,31 +122,9 @@ export class AppService {
       GenerateSecret: true,
       AllowedOAuthFlows: ['client_credentials'],
       SupportedIdentityProviders: ['COGNITO'],
-      // TODO: create scopes
-      AllowedOAuthScopes: []
+      AllowedOAuthScopes: [ 'https://localhost:8080/api/v2/access' ]
     });
    const { UserPoolClient } = await this.client.send(createUserPoolClientCommand);
-
-    // create userpool domain
-    const createUserpoolDomainCommand = new CreateUserPoolDomainCommand({
-      Domain: poolName,
-      UserPoolId: UserPool.Id
-    });
-    this.client.send(createUserpoolDomainCommand);
-
-    // create resource server
-    const createResourceServerCommand = new CreateResourceServerCommand({
-      Name: poolName,
-      UserPoolId: UserPool.Id,
-      Identifier: 'https://localhost:8080/api/v2/',
-      Scopes: [
-        {
-          ScopeName: 'access',
-          ScopeDescription: 'General access to API'
-        }
-      ]
-    });
-    this.client.send(createResourceServerCommand);
 
     return { 
       userPool: {

@@ -55,8 +55,8 @@ export class AuthService {
         let data = querystring.stringify({
             'grant_type': 'client_credentials',
             'client_id': clientId,
-            'client_secret': clientSecret,
-            'scopes': 'list'
+            'client_secret': app.client_secret,
+            'scopes': 'access'
         })
         // access by lazy loader
         try {
