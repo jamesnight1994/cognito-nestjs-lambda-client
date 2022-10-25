@@ -105,7 +105,7 @@ export class AppService {
         }
       ]
     });
-    let { ResourceServer } = await this.client.send(createResourceServerCommand);
+    const { ResourceServer } = await this.client.send(createResourceServerCommand);
 
     // create userpool domain
     const createUserpoolDomainCommand = new CreateUserPoolDomainCommand({
@@ -122,7 +122,8 @@ export class AppService {
       GenerateSecret: true,
       AllowedOAuthFlows: ['client_credentials'],
       SupportedIdentityProviders: ['COGNITO'],
-      AllowedOAuthScopes: [ 'https://localhost:8080/api/v2/access' ]
+      AllowedOAuthScopes: [ 'https://localhost:8080/api/v2/access' ],
+      AllowedOAuthFlowsUserPoolClient: true
     });
    const { UserPoolClient } = await this.client.send(createUserPoolClientCommand);
 
