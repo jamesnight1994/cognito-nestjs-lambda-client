@@ -3,20 +3,14 @@ import { NestFactory } from '@nestjs/core';
 import { Callback, Context, Handler } from 'aws-lambda/handler';
 import { AuthModule } from './auth.module';
 import { AuthService } from './auth.service';
+import { NewUser, User } from './@types/user';
+import { AppClient } from './@types/app';
 
-type AuthEvent = {
-  eventType: string,
-  data: {}
+interface AuthEvent  {
+  eventType: 'GET_ACCESS_TOKEN'|'REGISTER'|'LOGIN'|'TEST'
+  data: AppClient| NewUser| User
 }
-export enum EventTypes  {
-  CONFIRM_FORGOT_PASSWORD = 'CONFIRM_FORGOT_PASSWORD',
-  GET_ACCESS_TOKEN = 'GET_ACCESS_TOKEN',
-  REGISTER = 'REGISTER',
-  LOGIN = 'LOGIN',
-  TEST = 'TEST',
-  FORGOT_PASSWORD = 'FORGOT_PASSWORD',
-  REQUIRED_CHANGE_PASSWORD = 'REQUIRED_CHANGE_PASSWORD'
-}
+
 export const handler: Handler = async (
   event: any,
   context: Context,
@@ -24,22 +18,21 @@ export const handler: Handler = async (
 ) => {
   const appContext = await NestFactory.createApplicationContext(AuthModule);
   const authService = appContext.get(AuthService);
-  let authEvent = JSON.parse(JSON.stringify(event));
+  let authEvent: AuthEvent = JSON.parse(JSON.stringify(event));
   console.info(authEvent);
   
-  if(event["eventType"] == EventTypes.REGISTER){
+  if(authEvent.eventType == 'REGISTER'){
     await authService.adminCreateUser(
-        authEvent.data,
+        authEvent.data as NewUser,
         callback
       )
-  }else if(event["eventType"] == EventTypes.GET_ACCESS_TOKEN){
-    await authService.getAccessToken(event["data"]['client_id'],event["data"]['client_secret'],callback)
-  }else if(event["eventType"] == EventTypes.LOGIN){
+  }else if(authEvent.eventType == 'GET_ACCESS_TOKEN'){
+    await authService.getAccessToken(
+      authEvent.data as AppClient,
+      callback)
+  }else if(authEvent.eventType == 'LOGIN'){
     await authService.initiateAuth(
-      event["data"]['email'],
-      event["data"]['password'],
-      event["data"]['clientId'],
-      'USER_PASSWORD_AUTH',
+      authEvent.data as User,
       callback
     )
   }else{

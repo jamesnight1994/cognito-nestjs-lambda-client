@@ -7,7 +7,8 @@ import { App } from './entities/app';
 import { appDataSource } from './app-data-source';
 import { createHmac } from 'crypto';
 import { CognitoAccessTokenPayload } from 'aws-jwt-verify/jwt-model';
-import { NewUser } from './types/user'
+import { NewUser, User } from './@types/user'
+import { AppClient } from './@types/app';
 
 
 @Injectable()
@@ -23,36 +24,38 @@ export class AuthService {
     }
 
     /**
-     * Get tenant access token credentials from tenant user pool
-     * @param clientId 
-     * @param clientSecret 
+     * 
+     * @param data 
+     * @param callback 
      */
-    async getAccessToken(clientId: string, clientSecret: string, callback: Callback) {
+    async getAccessToken(client: AppClient, callback: Callback) {
         // search if  legacy credentials
         let app = await this.getAppBy({
-            auth0_id: clientId
+            auth0_id: client.client_id
         });
 
         // if legacy client id is found:(false)
         if(app != null){
             // ...clientId arg is equal client_id(that belongs to cognito) attribute
             console.log("Legacy client_id found");
-            clientId = app.client_id
-            console.log("Client Id is now",clientId)
+            client.client_id = app.client_id;
+            client.client_secret = app.client_secret;
+            console.log("Client Id is now",client.client_id)
         }
 
         let querystring = require('querystring');
         let data = querystring.stringify({
             'grant_type': 'client_credentials',
-            'client_id': clientId,
-            'client_secret': app.client_secret,
+            'client_id': client.client_id,
+            'client_secret': client.client_secret,
             'scopes': 'access'
         })
+        console.log("found tenant",data);
         // access by lazy loader
         try {
             await appDataSource.initialize();
             let tenant = await appDataSource.getRepository(App).findOneBy({
-                client_id: clientId
+                client_id: client.client_id
             });
             await appDataSource.destroy()
             console.log(tenant);
@@ -112,22 +115,22 @@ export class AuthService {
         }
     }
 
-    async initiateAuth(email: string, password: string, clientId: string, type: string, callback: Callback) {
+    async initiateAuth(user: User, callback: Callback) {
         await appDataSource.initialize();
         let tenant = await appDataSource.getRepository(App).findOneBy({
-            client_id: clientId
+            client_id: user.clientId
         });
         await appDataSource.destroy();
         const hasher = createHmac('sha256', tenant.client_secret);
-        hasher.update(`${email}${tenant.client_id}`);
+        hasher.update(`${user.email}${tenant.client_id}`);
         const secretHash = hasher.digest('base64');
 
 
         let input: InitiateAuthCommandInput = {
-            AuthFlow: type,
+            AuthFlow: 'USER_PASSWORD_AUTH',
             AuthParameters: {
-                USERNAME: email,
-                PASSWORD: password,
+                USERNAME: user.email,
+                PASSWORD: user.password,
                 SECRET_HASH: secretHash
             },
             ClientId: tenant.client_id
@@ -159,12 +162,12 @@ export class AuthService {
 
     }
 
-    async verifyToken(token: string, tokenUse: "access"): Promise<CognitoAccessTokenPayload> {
-        let verifier = CognitoJwtVerifier.create({
-            userPoolId: 'eu-west-1_yndJYKWT4',
-            tokenUse: tokenUse,
-            clientId: '7btmpg6nb8lq1unsq2cm1cm85h',
-        });
+    async verifyToken(token: string, verifyProperties: {
+        userPoolId: string,
+        tokenUse: 'access' | 'id',
+        clientId: string
+    }) {
+        let verifier = CognitoJwtVerifier.create(verifyProperties);
 
         const payload = verifier.verify(token);
         return await payload;
