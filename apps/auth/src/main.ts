@@ -42,23 +42,6 @@ export const handler: Handler = async (
       'USER_PASSWORD_AUTH',
       callback
     )
-  }else if(event["eventType"] == EventTypes.REQUIRED_CHANGE_PASSWORD){
-    await authService.respondToAuthChallenge(
-      'NEW_PASSWORD_REQUIRED',
-      {
-        USERNAME: event["data"]["email"],
-        PASSWORD: event["data"]["password"],
-        NEW_PASSWORD: event["data"]['new_password']
-      },
-      event["CHALLENGE_SESSION"],
-      callback
-    );
-  }else if(event["eventType"] == EventTypes.FORGOT_PASSWORD){
-    await authService.forgotPassword(event["data"]["email"],callback);
-  }else if(event["eventType"] == EventTypes.CONFIRM_FORGOT_PASSWORD){
-    await authService.confirmForgotPassword(event["data"]["email"],event["data"]["password"],event["data"]["code"],callback);
-  }else if(event["eventType"] == EventTypes.TEST){
-    callback(null,"Function is working");
   }else{
     callback(new HttpException('Event not found', HttpStatus.NOT_FOUND))
   }
