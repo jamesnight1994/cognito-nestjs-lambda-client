@@ -169,8 +169,12 @@ export class AuthService {
             clientId: data.clientId
         });
 
-        const payload = verifier.verify(data.token);
-        return await payload;
+        try{
+            const payload = await verifier.verify(data.token);
+            callback(null,payload);
+        }catch(e){
+            callback(e);
+        }
     }
 
     // TODO relocate to user class and implement here
