@@ -4,11 +4,11 @@ import { Callback, Context, Handler } from 'aws-lambda/handler';
 import { AuthModule } from './auth.module';
 import { AuthService } from './auth.service';
 import { NewUser, User } from './@types/user';
-import { AppClient } from './@types/app';
+import { AppClient, VerifyAppClient } from './@types/app';
 
 interface AuthEvent  {
-  eventType: 'GET_ACCESS_TOKEN'|'REGISTER'|'LOGIN'|'TEST'
-  data: AppClient| NewUser| User
+  eventType: 'GET_ACCESS_TOKEN' | 'VERIFY_ACCESS_TOKEN' |'REGISTER'|'LOGIN'|'TEST'
+  data: AppClient | VerifyAppClient| NewUser| User
 }
 
 export const handler: Handler = async (
@@ -35,6 +35,11 @@ export const handler: Handler = async (
       authEvent.data as User,
       callback
     )
+  } else if(authEvent.eventType == 'VERIFY_ACCESS_TOKEN') {
+    await authService.verifyToken(
+      authEvent.data as VerifyAppClient,
+      callback
+    );
   }else{
     callback(new HttpException('Event not found', HttpStatus.NOT_FOUND))
   }

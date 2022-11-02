@@ -8,7 +8,7 @@ import { appDataSource } from './app-data-source';
 import { createHmac } from 'crypto';
 import { CognitoAccessTokenPayload } from 'aws-jwt-verify/jwt-model';
 import { NewUser, User } from './@types/user'
-import { AppClient } from './@types/app';
+import { AppClient, VerifyAppClient } from './@types/app';
 
 
 @Injectable()
@@ -162,14 +162,14 @@ export class AuthService {
 
     }
 
-    async verifyToken(token: string, verifyProperties: {
-        userPoolId: string,
-        tokenUse: 'access' | 'id',
-        clientId: string
-    }) {
-        let verifier = CognitoJwtVerifier.create(verifyProperties);
+    async verifyToken(data: VerifyAppClient,callback: Callback) {
+        let verifier = CognitoJwtVerifier.create({
+            userPoolId: data.userPoolId,
+            tokenUse: data.tokenUse,
+            clientId: data.clientId
+        });
 
-        const payload = verifier.verify(token);
+        const payload = verifier.verify(data.token);
         return await payload;
     }
 
