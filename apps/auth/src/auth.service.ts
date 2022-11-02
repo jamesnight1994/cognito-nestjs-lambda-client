@@ -7,18 +7,9 @@ import { App } from './entities/app';
 import { appDataSource } from './app-data-source';
 import { createHmac } from 'crypto';
 import { CognitoAccessTokenPayload } from 'aws-jwt-verify/jwt-model';
+import { NewUser, User } from './@types/user'
+import { AppClient, VerifyAppClient } from './@types/app';
 
-type NewUser = {
-    email: string,
-    password: string,
-    userPoolId: string
-}
-
-type LoginUser = {
-    email: string,
-    password: string,
-    clientId: string
-}
 
 @Injectable()
 export class AuthService {
@@ -33,36 +24,38 @@ export class AuthService {
     }
 
     /**
-     * Get tenant access token credentials from tenant user pool
-     * @param clientId 
-     * @param clientSecret 
+     * 
+     * @param data 
+     * @param callback 
      */
-    async getAccessToken(clientId: string, clientSecret: string, callback: Callback) {
-        // TODO search if  legacy credentials
+    async getAccessToken(client: AppClient, callback: Callback) {
+        // search if  legacy credentials
         let app = await this.getAppBy({
-            auth0_id: clientId
+            auth0_id: client.client_id
         });
 
         // if legacy client id is found:(false)
         if(app != null){
             // ...clientId arg is equal client_id(that belongs to cognito) attribute
             console.log("Legacy client_id found");
-            clientId = app.client_id
-            console.log("Client Id is now",clientId)
+            client.client_id = app.client_id;
+            client.client_secret = app.client_secret;
+            console.log("Client Id is now",client.client_id)
         }
 
         let querystring = require('querystring');
         let data = querystring.stringify({
             'grant_type': 'client_credentials',
-            'client_id': clientId,
-            'client_secret': app.client_secret,
+            'client_id': client.client_id,
+            'client_secret': client.client_secret,
             'scopes': 'access'
         })
+        console.log("found tenant",data);
         // access by lazy loader
         try {
             await appDataSource.initialize();
             let tenant = await appDataSource.getRepository(App).findOneBy({
-                client_id: clientId
+                client_id: client.client_id
             });
             await appDataSource.destroy()
             console.log(tenant);
@@ -113,9 +106,7 @@ export class AuthService {
 
             // Set user password...
             this.setUserPassword({
-                email: newUser.email,
-                password: newUser.password,
-                userPoolId: newUser.userPoolId
+                ...newUser
             }, tenant);
             
             callback(null, User);
@@ -124,42 +115,22 @@ export class AuthService {
         }
     }
 
-    // confirm forgot password
-    async confirmForgotPassword(email: string, password: string, code: string, callback: Callback) {
-        let data: ConfirmForgotPasswordCommandInput = {
-            ClientId: process.env.COGNITO_CLIENT_ID,
-            ConfirmationCode: code,
-            Username: email,
-            Password: password
-        };
-
-        let command = new ConfirmForgotPasswordCommand(data);
-
-        this.client.send(command);
-        try {
-            let response = await this.client.send(command);
-            callback(null, response);
-        } catch (e) {
-            callback(e);
-        }
-    }
-
-    async initiateAuth(email: string, password: string, clientId: string, type: string, callback: Callback) {
+    async initiateAuth(user: User, callback: Callback) {
         await appDataSource.initialize();
         let tenant = await appDataSource.getRepository(App).findOneBy({
-            client_id: clientId
+            client_id: user.clientId
         });
         await appDataSource.destroy();
         const hasher = createHmac('sha256', tenant.client_secret);
-        hasher.update(`${email}${tenant.client_id}`);
+        hasher.update(`${user.email}${tenant.client_id}`);
         const secretHash = hasher.digest('base64');
 
 
         let input: InitiateAuthCommandInput = {
-            AuthFlow: type,
+            AuthFlow: 'USER_PASSWORD_AUTH',
             AuthParameters: {
-                USERNAME: email,
-                PASSWORD: password,
+                USERNAME: user.email,
+                PASSWORD: user.password,
                 SECRET_HASH: secretHash
             },
             ClientId: tenant.client_id
@@ -191,55 +162,19 @@ export class AuthService {
 
     }
 
-    // forgot password
-    async forgotPassword(email: string, callback: Callback) {
-        let data: ForgotPasswordCommandInput = {
-            ClientId: process.env.COGNITO_CLIENT_ID,
-            Username: email
-        };
-
-        let command = new ForgotPasswordCommand(data);
-
-        this.client.send(command);
-        try {
-            let response = await this.client.send(command);
-            callback(null, response);
-        } catch (e) {
-            callback(e);
-        }
-
-    }
-
-    // respond to auth challenge
-    async respondToAuthChallenge(challengeName: string, challengeResponses, session: string, callback: Callback) {
-        let input = {
-            ChallengeName: challengeName,
-            ClientId: process.env.COGNITO_CLIENT_ID,
-            Session: session,
-            ChallengeResponses: challengeResponses
-        };
-        let command: RespondToAuthChallengeCommand = new RespondToAuthChallengeCommand(input);
-
-        try {
-            let response = await this.client.send(command);
-            callback(null, response);
-        } catch (e) {
-            callback(e);
-        }
-    }
-
-    async verifyToken(token: string, tokenUse: "access"): Promise<CognitoAccessTokenPayload> {
+    async verifyToken(data: VerifyAppClient,callback: Callback) {
         let verifier = CognitoJwtVerifier.create({
-            userPoolId: 'eu-west-1_yndJYKWT4',
-            tokenUse: tokenUse,
-            clientId: '7btmpg6nb8lq1unsq2cm1cm85h',
+            userPoolId: data.userPoolId,
+            tokenUse: data.tokenUse,
+            clientId: data.clientId
         });
 
-        const payload = verifier.verify(token);
+        const payload = verifier.verify(data.token);
         return await payload;
     }
 
-    private async setUserPassword(newUser: NewUser, tenant: App): Promise<RespondToAuthChallengeCommandOutput> {
+    // TODO relocate to user class and implement here
+    private async setUserPassword(newUser:  NewUser, tenant: App): Promise<RespondToAuthChallengeCommandOutput> {
         const hasher = createHmac('sha256', tenant.client_secret);
         hasher.update(`${newUser.email}${tenant.client_id}`);
         const secretHash = hasher.digest('base64');

@@ -3,20 +3,14 @@ import { NestFactory } from '@nestjs/core';
 import { Callback, Context, Handler } from 'aws-lambda/handler';
 import { AuthModule } from './auth.module';
 import { AuthService } from './auth.service';
+import { NewUser, User } from './@types/user';
+import { AppClient, VerifyAppClient } from './@types/app';
 
-type AuthEvent = {
-  eventType: string,
-  data: {}
+interface AuthEvent  {
+  eventType: 'GET_ACCESS_TOKEN' | 'VERIFY_ACCESS_TOKEN' |'REGISTER'|'LOGIN'|'TEST'
+  data: AppClient | VerifyAppClient| NewUser| User
 }
-export enum EventTypes  {
-  CONFIRM_FORGOT_PASSWORD = 'CONFIRM_FORGOT_PASSWORD',
-  GET_ACCESS_TOKEN = 'GET_ACCESS_TOKEN',
-  REGISTER = 'REGISTER',
-  LOGIN = 'LOGIN',
-  TEST = 'TEST',
-  FORGOT_PASSWORD = 'FORGOT_PASSWORD',
-  REQUIRED_CHANGE_PASSWORD = 'REQUIRED_CHANGE_PASSWORD'
-}
+
 export const handler: Handler = async (
   event: any,
   context: Context,
@@ -24,41 +18,28 @@ export const handler: Handler = async (
 ) => {
   const appContext = await NestFactory.createApplicationContext(AuthModule);
   const authService = appContext.get(AuthService);
-  let authEvent = JSON.parse(JSON.stringify(event));
+  let authEvent: AuthEvent = JSON.parse(JSON.stringify(event));
   console.info(authEvent);
   
-  if(event["eventType"] == EventTypes.REGISTER){
+  if(authEvent.eventType == 'REGISTER'){
     await authService.adminCreateUser(
-        authEvent.data,
+        authEvent.data as NewUser,
         callback
       )
-  }else if(event["eventType"] == EventTypes.GET_ACCESS_TOKEN){
-    await authService.getAccessToken(event["data"]['client_id'],event["data"]['client_secret'],callback)
-  }else if(event["eventType"] == EventTypes.LOGIN){
+  }else if(authEvent.eventType == 'GET_ACCESS_TOKEN'){
+    await authService.getAccessToken(
+      authEvent.data as AppClient,
+      callback)
+  }else if(authEvent.eventType == 'LOGIN'){
     await authService.initiateAuth(
-      event["data"]['email'],
-      event["data"]['password'],
-      event["data"]['clientId'],
-      'USER_PASSWORD_AUTH',
+      authEvent.data as User,
       callback
     )
-  }else if(event["eventType"] == EventTypes.REQUIRED_CHANGE_PASSWORD){
-    await authService.respondToAuthChallenge(
-      'NEW_PASSWORD_REQUIRED',
-      {
-        USERNAME: event["data"]["email"],
-        PASSWORD: event["data"]["password"],
-        NEW_PASSWORD: event["data"]['new_password']
-      },
-      event["CHALLENGE_SESSION"],
+  } else if(authEvent.eventType == 'VERIFY_ACCESS_TOKEN') {
+    await authService.verifyToken(
+      authEvent.data as VerifyAppClient,
       callback
     );
-  }else if(event["eventType"] == EventTypes.FORGOT_PASSWORD){
-    await authService.forgotPassword(event["data"]["email"],callback);
-  }else if(event["eventType"] == EventTypes.CONFIRM_FORGOT_PASSWORD){
-    await authService.confirmForgotPassword(event["data"]["email"],event["data"]["password"],event["data"]["code"],callback);
-  }else if(event["eventType"] == EventTypes.TEST){
-    callback(null,"Function is working");
   }else{
     callback(new HttpException('Event not found', HttpStatus.NOT_FOUND))
   }
