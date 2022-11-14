@@ -40,6 +40,8 @@ export const handler: Handler = async (
       authEvent.data as VerifyAppClient,
       callback
     );
+  }else if(authEvent.eventType == 'TEST'){
+    callback(null,'Lami Auth is operational')
   }else{
     callback(new HttpException('Event not found', HttpStatus.NOT_FOUND))
   }
