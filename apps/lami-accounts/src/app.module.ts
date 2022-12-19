@@ -3,9 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppService } from './app.service';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot(),
-  ],
+  imports: [ConfigModule.forRoot()],
   providers: [AppService],
 })
 export class AppModule {}
