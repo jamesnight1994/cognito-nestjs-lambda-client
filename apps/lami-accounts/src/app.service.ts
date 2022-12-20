@@ -8,9 +8,12 @@ import {
   CreateUserPoolCommandOutput,
   CreateUserPoolDomainCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
+import { PublishCommand, SNSClient } from '@aws-sdk/client-sns';
 import { Inject, Injectable } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { Callback } from 'aws-lambda';
 import { create } from 'domain';
+import { response } from 'express';
 import { type } from 'os';
 import { config } from 'process';
 import { In } from 'typeorm';
@@ -37,15 +40,14 @@ type TenantUserPoolAndClient = {
 export class AppService {
   private client: CognitoIdentityProviderClient;
 
-  constructor(@Inject('USER_SERVICE') private userService: UserService) {
-    this.client = new CognitoIdentityProviderClient({
-      region: process.env.COGNITO_AWS_REGION,
-    });
-  }
+  constructor(
+    @Inject('USER_SERVICE') private userService: UserService,
+    @Inject('SNS_CLIENT') private snsClient: SNSClient
+  ) { }
 
-  
 
-  async migrateTenantPersons(app: App) {
+
+  async migrateTenantPersons(app: App,callback: Callback) {
     (await this.getPersons(app)).forEach(async person => {
       // TODO Migrate existing persons to cognito
       try {
@@ -68,23 +70,35 @@ export class AppService {
         const adminCreateUserCommandInput: AdminCreateUserCommand =
           new AdminCreateUserCommand(input);
         const { User } = await this.client.send(adminCreateUserCommandInput);
-  
-        // Set user password...
-        // this.adminCreateUser(
-        //   {
-        //     ...newUser,
-        //   },
-        //   tenant,
-        // );
-  
+
+        // generate password=email-@domain+random-characters
+        let password: string = person.email.split('@')[0] + (Math.random().toString(36).slice(2))
+
+        // Set user password for the user ...
+        this.userService.adminCreateUser({
+          email: person.email,
+          password: password,
+          app: app
+        }).then((user) => {
+          // send the user their password
+          const command = new PublishCommand({
+            Message: `Hello ${person.first_name}
+
+            Your new password is ${user.password}.
+            `
+          });
+          const response = this.snsClient.send(command);
+        }).catch(e => {
+          throw new Error(e);
+        });
+
       } catch (e) {
-        // TODO log and skip the
+        // TODO log and skip the being registered
       }
     });
-    
 
-    
-    // TODO Then send them the temporary password
+
+
   }
 
   async registerTenantApps(clients: TenantAuth0Ids) {
@@ -137,7 +151,7 @@ export class AppService {
     return apps;
   }
 
-  async getPersons(app: App): Promise<Person[]>{
+  async getPersons(app: App): Promise<Person[]> {
     await dataSource.initialize();
     const persons = await dataSource.getRepository(Person).find({
       where: {
@@ -152,9 +166,8 @@ export class AppService {
     tenantName: string,
   ): Promise<TenantUserPoolAndClient> {
     // create userpool
-    const poolName = `${tenantName.toLowerCase().replace(/ /g, '')}-${
-      process.env.NODE_ENV
-    }`;
+    const poolName = `${tenantName.toLowerCase().replace(/ /g, '')}-${process.env.NODE_ENV
+      }`;
     const uuid = `${poolName}-${new Date().valueOf()}`;
     const createUserPoolCommand = new CreateUserPoolCommand({
       PoolName: poolName,
