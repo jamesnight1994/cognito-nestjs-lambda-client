@@ -11,4 +11,7 @@ export default class Person {
 
   @Column()
   cognito_username: string;
+
+  @Column()
+  tenant_party_id: number;
 }

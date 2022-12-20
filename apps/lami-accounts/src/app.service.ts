@@ -1,4 +1,6 @@
 import {
+  AdminCreateUserCommand,
+  AdminCreateUserCommandInput,
   CognitoIdentityProviderClient,
   CreateResourceServerCommand,
   CreateUserPoolClientCommand,
@@ -6,14 +8,18 @@ import {
   CreateUserPoolCommandOutput,
   CreateUserPoolDomainCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
 import { create } from 'domain';
 import { type } from 'os';
 import { config } from 'process';
 import { In } from 'typeorm';
 import { dataSource } from './data.source';
 import { App } from './entities/app';
+import Person from './entities/person';
 import { Tenant } from './entities/tenant';
+import { UserModule } from './user/user.module';
+import { UserService } from './user/user.service';
 
 type TenantAuth0Ids = Array<string>;
 type TenantUserPoolAndClient = {
@@ -31,15 +37,55 @@ type TenantUserPoolAndClient = {
 export class AppService {
   private client: CognitoIdentityProviderClient;
 
-  constructor() {
+  constructor(@Inject('USER_SERVICE') private userService: UserService) {
     this.client = new CognitoIdentityProviderClient({
       region: process.env.COGNITO_AWS_REGION,
     });
   }
 
-  // Get existing user to cognito
-  // Send temporary password via email
-  // Then send them the temporary password
+  
+
+  async migrateTenantPersons(app: App) {
+    (await this.getPersons(app)).forEach(async person => {
+      // TODO Migrate existing persons to cognito
+      try {
+        const input: AdminCreateUserCommandInput = {
+          UserPoolId: app.user_pool,
+          Username: person.email,
+          TemporaryPassword: process.env.TEMPORARY_PASSWORD,
+          UserAttributes: [
+            {
+              Name: 'email',
+              Value: person.email,
+            },
+            {
+              Name: 'email_verified',
+              Value: 'true',
+            },
+          ],
+        };
+        // register user on cognito
+        const adminCreateUserCommandInput: AdminCreateUserCommand =
+          new AdminCreateUserCommand(input);
+        const { User } = await this.client.send(adminCreateUserCommandInput);
+  
+        // Set user password...
+        // this.adminCreateUser(
+        //   {
+        //     ...newUser,
+        //   },
+        //   tenant,
+        // );
+  
+      } catch (e) {
+        // TODO log and skip the
+      }
+    });
+    
+
+    
+    // TODO Then send them the temporary password
+  }
 
   async registerTenantApps(clients: TenantAuth0Ids) {
     (await this.getApps(clients)).forEach(async (app) => {
@@ -89,6 +135,18 @@ export class AppService {
 
     await dataSource.destroy();
     return apps;
+  }
+
+  async getPersons(app: App): Promise<Person[]>{
+    await dataSource.initialize();
+    const persons = await dataSource.getRepository(Person).find({
+      where: {
+        tenant_party_id: app.tenant.tenant_id
+      },
+    });
+
+    await dataSource.destroy();
+    return persons;
   }
   async createTenantUserPoolAndClient(
     tenantName: string,
