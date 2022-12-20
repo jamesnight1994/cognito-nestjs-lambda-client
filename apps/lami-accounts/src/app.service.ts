@@ -42,13 +42,11 @@ export class AppService {
 
   constructor(
     @Inject('USER_SERVICE') private userService: UserService,
-    @Inject('SNS_CLIENT') private snsClient: SNSClient
-  ) { }
+    @Inject('SNS_CLIENT') private snsClient: SNSClient,
+  ) {}
 
-
-
-  async migrateTenantPersons(app: App,callback: Callback) {
-    (await this.getPersons(app)).forEach(async person => {
+  async migrateTenantPersons(app: App, callback: Callback) {
+    (await this.getPersons(app)).forEach(async (person) => {
       // TODO Migrate existing persons to cognito
       try {
         const input: AdminCreateUserCommandInput = {
@@ -72,33 +70,33 @@ export class AppService {
         const { User } = await this.client.send(adminCreateUserCommandInput);
 
         // generate password=email-@domain+random-characters
-        let password: string = person.email.split('@')[0] + (Math.random().toString(36).slice(2))
+        const password: string =
+          person.email.split('@')[0] + Math.random().toString(36).slice(2);
 
         // Set user password for the user ...
-        this.userService.adminCreateUser({
-          email: person.email,
-          password: password,
-          app: app
-        }).then((user) => {
-          // send the user their password
-          const command = new PublishCommand({
-            Message: `Hello ${person.first_name}
+        this.userService
+          .adminCreateUser({
+            email: person.email,
+            password: password,
+            app: app,
+          })
+          .then((user) => {
+            // send the user their password
+            const command = new PublishCommand({
+              Message: `Hello ${person.first_name}
 
             Your new password is ${user.password}.
-            `
+            `,
+            });
+            const response = this.snsClient.send(command);
+          })
+          .catch((e) => {
+            throw new Error(e);
           });
-          const response = this.snsClient.send(command);
-        }).catch(e => {
-          throw new Error(e);
-        });
-
       } catch (e) {
         // TODO log and skip the being registered
       }
     });
-
-
-
   }
 
   async registerTenantApps(clients: TenantAuth0Ids) {
@@ -155,7 +153,7 @@ export class AppService {
     await dataSource.initialize();
     const persons = await dataSource.getRepository(Person).find({
       where: {
-        tenant_party_id: app.tenant.tenant_id
+        tenant_party_id: app.tenant.tenant_id,
       },
     });
 
@@ -166,8 +164,9 @@ export class AppService {
     tenantName: string,
   ): Promise<TenantUserPoolAndClient> {
     // create userpool
-    const poolName = `${tenantName.toLowerCase().replace(/ /g, '')}-${process.env.NODE_ENV
-      }`;
+    const poolName = `${tenantName.toLowerCase().replace(/ /g, '')}-${
+      process.env.NODE_ENV
+    }`;
     const uuid = `${poolName}-${new Date().valueOf()}`;
     const createUserPoolCommand = new CreateUserPoolCommand({
       PoolName: poolName,

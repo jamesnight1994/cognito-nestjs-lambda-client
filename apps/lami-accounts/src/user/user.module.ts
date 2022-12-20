@@ -5,21 +5,19 @@ import { UserService } from './user.service';
 const EXPORTS = [
   {
     provide: 'USER_SERVICE',
-    useClass: UserService
+    useClass: UserService,
   },
-]
+];
 @Module({
-  exports: [
-    ...EXPORTS
-  ],
+  exports: [...EXPORTS],
   providers: [
     ...EXPORTS,
     {
       provide: 'COGNITO_CLIENT',
-      useValue: (new CognitoIdentityProviderClient({
+      useValue: new CognitoIdentityProviderClient({
         region: process.env.COGNITO_AWS_REGION,
-      }))
-    }
-  ]
+      }),
+    },
+  ],
 })
 export class UserModule {}

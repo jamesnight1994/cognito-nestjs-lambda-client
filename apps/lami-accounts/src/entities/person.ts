@@ -7,7 +7,7 @@ export default class Person {
   email: string;
 
   @Column()
-  first_name:string;
+  first_name: string;
 
   @Column()
   person: string;
