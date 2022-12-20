@@ -5,17 +5,11 @@ import {
   CreateResourceServerCommand,
   CreateUserPoolClientCommand,
   CreateUserPoolCommand,
-  CreateUserPoolCommandOutput,
   CreateUserPoolDomainCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { PublishCommand, SNSClient } from '@aws-sdk/client-sns';
 import { Inject, Injectable } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
 import { Callback } from 'aws-lambda';
-import { create } from 'domain';
-import { response } from 'express';
-import { type } from 'os';
-import { config } from 'process';
 import { In } from 'typeorm';
 import { dataSource } from './data.source';
 import { App } from './entities/app';
@@ -81,12 +75,13 @@ export class AppService {
             app: app,
           })
           .then((user) => {
-            // send the user their password
-            const command = new PublishCommand({
-              Message: `Hello ${person.first_name}
+            let message = `Hello ${person.first_name}
 
             Your new password is ${user.password}.
-            `,
+            `;
+            // send the user their password
+            const command = new PublishCommand({
+              Message: message
             });
             const response = this.snsClient.send(command);
           })
