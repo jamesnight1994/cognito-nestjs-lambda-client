@@ -218,4 +218,4 @@ The response might look like this. The **username** object is the main user iden
 ```
 
 ## CLient SDK
-Using AWS lambda client SDK is one way to interact withe serverless function demonstrated here. However the following SDK will abstract most the setup and functionality.
+Using AWS lambda client SDK is one way to interact withe serverless function demonstrated here. However the following SDK will abstract most the setup and functionality. Here is the link to it's repository https://github.com/jamesnight1994/sdk-for-cognito-lambda-client
