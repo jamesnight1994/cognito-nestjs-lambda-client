@@ -1,9 +1,9 @@
 {
     "eventType": "REGISTER",
     "data": {
-        "email": "nightravenjames@gmail.com",
+        "email": "user@mailinator.com",
         "userPoolId": "eu-west-1_yndJYKWT4",
-        "password": "Kijanamsafi@30"
+        "password": "password"
         
     }
 }
